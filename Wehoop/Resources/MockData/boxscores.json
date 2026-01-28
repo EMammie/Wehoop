@@ -1,0 +1,114 @@
+[
+  {
+    "gameId": "game-1",
+    "homeScore": 62,
+    "awayScore": 58,
+    "homeStats": {
+      "points": 62,
+      "rebounds": 28,
+      "assists": 14,
+      "steals": 6,
+      "blocks": 3,
+      "turnovers": 8,
+      "fieldGoalPercentage": 48.5,
+      "threePointPercentage": 38.2,
+      "freeThrowPercentage": 82.1,
+      "fouls": 12
+    },
+    "awayStats": {
+      "points": 58,
+      "rebounds": 26,
+      "assists": 12,
+      "steals": 4,
+      "blocks": 2,
+      "turnovers": 10,
+      "fieldGoalPercentage": 45.2,
+      "threePointPercentage": 35.8,
+      "freeThrowPercentage": 78.5,
+      "fouls": 14
+    },
+    "quarters": [
+      {
+        "id": "Q1",
+        "homeScore": 16,
+        "awayScore": 14,
+        "quarterNumber": 1
+      },
+      {
+        "id": "Q2",
+        "homeScore": 15,
+        "awayScore": 16,
+        "quarterNumber": 2
+      },
+      {
+        "id": "Q3",
+        "homeScore": 18,
+        "awayScore": 15,
+        "quarterNumber": 3
+      },
+      {
+        "id": "Q4",
+        "homeScore": 13,
+        "awayScore": 13,
+        "quarterNumber": 4
+      }
+    ],
+    "lastUpdated": "2025-01-17T20:45:00Z"
+  },
+  {
+    "gameId": "game-2",
+    "homeScore": 45,
+    "awayScore": 48,
+    "homeStats": {
+      "points": 45,
+      "rebounds": 22,
+      "assists": 10,
+      "steals": 3,
+      "blocks": 2,
+      "turnovers": 6,
+      "fieldGoalPercentage": 44.2,
+      "threePointPercentage": 36.5,
+      "freeThrowPercentage": 80.0,
+      "fouls": 8
+    },
+    "awayStats": {
+      "points": 48,
+      "rebounds": 24,
+      "assists": 11,
+      "steals": 5,
+      "blocks": 3,
+      "turnovers": 5,
+      "fieldGoalPercentage": 50.8,
+      "threePointPercentage": 42.1,
+      "freeThrowPercentage": 85.7,
+      "fouls": 9
+    },
+    "quarters": [
+      {
+        "id": "Q1",
+        "homeScore": 12,
+        "awayScore": 14,
+        "quarterNumber": 1
+      },
+      {
+        "id": "Q2",
+        "homeScore": 11,
+        "awayScore": 13,
+        "quarterNumber": 2
+      },
+      {
+        "id": "Q3",
+        "homeScore": 12,
+        "awayScore": 11,
+        "quarterNumber": 3
+      },
+      {
+        "id": "Q4",
+        "homeScore": 10,
+        "awayScore": 10,
+        "quarterNumber": 4
+      }
+    ],
+    "lastUpdated": "2025-01-18T21:15:00Z"
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "team-1",
+    "name": "Mist BC",
+    "abbreviation": "MST",
+    "logoURL": "https://example.com/logos/mist-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 12,
+    "losses": 3,
+    "winPercentage": 0.800
+  },
+  {
+    "id": "team-2",
+    "name": "Lunar Owls BC",
+    "abbreviation": "LOW",
+    "logoURL": "https://example.com/logos/lunar-owls-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 11,
+    "losses": 4,
+    "winPercentage": 0.733
+  },
+  {
+    "id": "team-3",
+    "name": "Rose BC",
+    "abbreviation": "ROS",
+    "logoURL": "https://example.com/logos/rose-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 10,
+    "losses": 5,
+    "winPercentage": 0.667
+  },
+  {
+    "id": "team-4",
+    "name": "Vinyl BC",
+    "abbreviation": "VIN",
+    "logoURL": "https://example.com/logos/vinyl-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 9,
+    "losses": 6,
+    "winPercentage": 0.600
+  },
+  {
+    "id": "team-5",
+    "name": "Phantom BC",
+    "abbreviation": "PHA",
+    "logoURL": "https://example.com/logos/phantom-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 8,
+    "losses": 7,
+    "winPercentage": 0.533
+  },
+  {
+    "id": "team-6",
+    "name": "Laces BC",
+    "abbreviation": "LAC",
+    "logoURL": "https://example.com/logos/laces-bc.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 7,
+    "losses": 8,
+    "winPercentage": 0.467
+  },
+  {
+    "id": "team-7",
+    "name": "Breeze",
+    "abbreviation": "BRZ",
+    "logoURL": "https://example.com/logos/breeze.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 6,
+    "losses": 9,
+    "winPercentage": 0.400
+  },
+  {
+    "id": "team-8",
+    "name": "Hive",
+    "abbreviation": "HIV",
+    "logoURL": "https://example.com/logos/hive.png",
+    "city": "Miami",
+    "conference": "Eastern",
+    "division": "Southeast",
+    "wins": 5,
+    "losses": 10,
+    "winPercentage": 0.333
+  }
+]

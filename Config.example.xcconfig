@@ -1,0 +1,13 @@
+// Config.example.xcconfig
+// This is a template file. Copy this to Config.xcconfig and fill in your actual API credentials.
+// Config.xcconfig is gitignored and should never be committed.
+
+// Sportradar Unrivaled API Configuration
+// Note: The API version (v8) is automatically added to requests via the version parameter
+API_BASE_URL = https://api.sportradar.com/unrivaled
+API_KEY = YOUR_API_KEY_HERE
+
+// Build Settings
+// These values will be available in Info.plist and can be accessed via Bundle.main.infoDictionary
+API_BASE_URL_PLIST_KEY = $(API_BASE_URL)
+API_KEY_PLIST_KEY = $(API_KEY)

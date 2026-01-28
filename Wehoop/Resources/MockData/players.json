@@ -1,0 +1,731 @@
+[
+  {
+    "id": "player-1",
+    "name": "Breanna Stewart",
+    "team": {
+      "id": "team-1",
+      "name": "Mist BC",
+      "abbreviation": "MST",
+      "logoURL": "https://example.com/logos/mist-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 12,
+      "losses": 3,
+      "winPercentage": 0.800
+    },
+    "position": "Forward",
+    "statistics": [
+      {
+        "id": "stat-1",
+        "name": "Points Per Game",
+        "value": 19.2,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-2",
+        "name": "Rebounds Per Game",
+        "value": 8.5,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-3",
+        "name": "Assists Per Game",
+        "value": 4.2,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-4",
+        "name": "Three Point Percentage",
+        "value": 38.5,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 30,
+    "height": "6'4\"",
+    "weight": 170,
+    "age": 29,
+    "photoURL": "https://example.com/photos/breanna-stewart.jpg"
+  },
+  {
+    "id": "player-2",
+    "name": "Jewell Loyd",
+    "team": {
+      "id": "team-1",
+      "name": "Mist BC",
+      "abbreviation": "MST",
+      "logoURL": "https://example.com/logos/mist-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 12,
+      "losses": 3,
+      "winPercentage": 0.800
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-5",
+        "name": "Points Per Game",
+        "value": 18.9,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-6",
+        "name": "Assists Per Game",
+        "value": 4.5,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-7",
+        "name": "Rebounds Per Game",
+        "value": 3.8,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-8",
+        "name": "Three Point Percentage",
+        "value": 37.5,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 24,
+    "height": "5'10\"",
+    "weight": 148,
+    "age": 30,
+    "photoURL": "https://example.com/photos/jewell-loyd.jpg"
+  },
+  {
+    "id": "player-3",
+    "name": "Napheesa Collier",
+    "team": {
+      "id": "team-2",
+      "name": "Lunar Owls BC",
+      "abbreviation": "LOW",
+      "logoURL": "https://example.com/logos/lunar-owls-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 11,
+      "losses": 4,
+      "winPercentage": 0.733
+    },
+    "position": "Forward",
+    "statistics": [
+      {
+        "id": "stat-9",
+        "name": "Points Per Game",
+        "value": 17.8,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-10",
+        "name": "Rebounds Per Game",
+        "value": 7.2,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-11",
+        "name": "Assists Per Game",
+        "value": 3.9,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-12",
+        "name": "Field Goal Percentage",
+        "value": 51.2,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 24,
+    "height": "6'1\"",
+    "weight": 185,
+    "age": 27,
+    "photoURL": "https://example.com/photos/napheesa-collier.jpg"
+  },
+  {
+    "id": "player-4",
+    "name": "Skylar Diggins-Smith",
+    "team": {
+      "id": "team-2",
+      "name": "Lunar Owls BC",
+      "abbreviation": "LOW",
+      "logoURL": "https://example.com/logos/lunar-owls-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 11,
+      "losses": 4,
+      "winPercentage": 0.733
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-13",
+        "name": "Points Per Game",
+        "value": 16.5,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-14",
+        "name": "Assists Per Game",
+        "value": 6.1,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-15",
+        "name": "Rebounds Per Game",
+        "value": 4.3,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-16",
+        "name": "Steals Per Game",
+        "value": 1.7,
+        "category": "defense",
+        "unit": "steals",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 4,
+    "height": "5'9\"",
+    "weight": 145,
+    "age": 34,
+    "photoURL": "https://example.com/photos/skylar-diggins-smith.jpg"
+  },
+  {
+    "id": "player-5",
+    "name": "Chelsea Gray",
+    "team": {
+      "id": "team-3",
+      "name": "Rose BC",
+      "abbreviation": "ROS",
+      "logoURL": "https://example.com/logos/rose-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 10,
+      "losses": 5,
+      "winPercentage": 0.667
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-17",
+        "name": "Points Per Game",
+        "value": 15.8,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-18",
+        "name": "Assists Per Game",
+        "value": 7.2,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-19",
+        "name": "Rebounds Per Game",
+        "value": 3.5,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-20",
+        "name": "Field Goal Percentage",
+        "value": 48.9,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 12,
+    "height": "5'11\"",
+    "weight": 170,
+    "age": 31,
+    "photoURL": "https://example.com/photos/chelsea-gray.jpg"
+  },
+  {
+    "id": "player-6",
+    "name": "Kahleah Copper",
+    "team": {
+      "id": "team-3",
+      "name": "Rose BC",
+      "abbreviation": "ROS",
+      "logoURL": "https://example.com/logos/rose-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 10,
+      "losses": 5,
+      "winPercentage": 0.667
+    },
+    "position": "Forward",
+    "statistics": [
+      {
+        "id": "stat-21",
+        "name": "Points Per Game",
+        "value": 18.5,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-22",
+        "name": "Rebounds Per Game",
+        "value": 6.8,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-23",
+        "name": "Assists Per Game",
+        "value": 3.2,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-24",
+        "name": "Steals Per Game",
+        "value": 1.9,
+        "category": "defense",
+        "unit": "steals",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 2,
+    "height": "6'1\"",
+    "weight": 165,
+    "age": 29,
+    "photoURL": "https://example.com/photos/kahleah-copper.jpg"
+  },
+  {
+    "id": "player-7",
+    "name": "Angel Reese",
+    "team": {
+      "id": "team-3",
+      "name": "Rose BC",
+      "abbreviation": "ROS",
+      "logoURL": "https://example.com/logos/rose-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 10,
+      "losses": 5,
+      "winPercentage": 0.667
+    },
+    "position": "Forward",
+    "statistics": [
+      {
+        "id": "stat-25",
+        "name": "Points Per Game",
+        "value": 16.2,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-26",
+        "name": "Rebounds Per Game",
+        "value": 11.5,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-27",
+        "name": "Assists Per Game",
+        "value": 2.8,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-28",
+        "name": "Field Goal Percentage",
+        "value": 53.4,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 10,
+    "height": "6'3\"",
+    "weight": 190,
+    "age": 21,
+    "photoURL": "https://example.com/photos/angel-reese.jpg"
+  },
+  {
+    "id": "player-8",
+    "name": "Arike Ogunbowale",
+    "team": {
+      "id": "team-4",
+      "name": "Vinyl BC",
+      "abbreviation": "VIN",
+      "logoURL": "https://example.com/logos/vinyl-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 9,
+      "losses": 6,
+      "winPercentage": 0.600
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-29",
+        "name": "Points Per Game",
+        "value": 19.7,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-30",
+        "name": "Assists Per Game",
+        "value": 4.8,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-31",
+        "name": "Rebounds Per Game",
+        "value": 4.2,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-32",
+        "name": "Steals Per Game",
+        "value": 1.6,
+        "category": "defense",
+        "unit": "steals",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 24,
+    "height": "5'7\"",
+    "weight": 165,
+    "age": 27,
+    "photoURL": "https://example.com/photos/arike-ogunbowale.jpg"
+  },
+  {
+    "id": "player-9",
+    "name": "Rhyne Howard",
+    "team": {
+      "id": "team-4",
+      "name": "Vinyl BC",
+      "abbreviation": "VIN",
+      "logoURL": "https://example.com/logos/vinyl-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 9,
+      "losses": 6,
+      "winPercentage": 0.600
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-33",
+        "name": "Points Per Game",
+        "value": 17.3,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-34",
+        "name": "Rebounds Per Game",
+        "value": 5.1,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-35",
+        "name": "Assists Per Game",
+        "value": 3.9,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-36",
+        "name": "Three Point Percentage",
+        "value": 39.2,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 10,
+    "height": "6'2\"",
+    "weight": 175,
+    "age": 24,
+    "photoURL": "https://example.com/photos/rhyne-howard.jpg"
+  },
+  {
+    "id": "player-10",
+    "name": "Sabrina Ionescu",
+    "team": {
+      "id": "team-5",
+      "name": "Phantom BC",
+      "abbreviation": "PHA",
+      "logoURL": "https://example.com/logos/phantom-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 8,
+      "losses": 7,
+      "winPercentage": 0.533
+    },
+    "position": "Guard",
+    "statistics": [
+      {
+        "id": "stat-37",
+        "name": "Points Per Game",
+        "value": 17.5,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-38",
+        "name": "Assists Per Game",
+        "value": 6.2,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-39",
+        "name": "Rebounds Per Game",
+        "value": 4.8,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-40",
+        "name": "Three Point Percentage",
+        "value": 41.2,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 20,
+    "height": "5'11\"",
+    "weight": 165,
+    "age": 26,
+    "photoURL": "https://example.com/photos/sabrina-ionescu.jpg"
+  },
+  {
+    "id": "player-11",
+    "name": "Jonquel Jones",
+    "team": {
+      "id": "team-6",
+      "name": "Laces BC",
+      "abbreviation": "LAC",
+      "logoURL": "https://example.com/logos/laces-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 7,
+      "losses": 8,
+      "winPercentage": 0.467
+    },
+    "position": "Center",
+    "statistics": [
+      {
+        "id": "stat-41",
+        "name": "Points Per Game",
+        "value": 16.3,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-42",
+        "name": "Rebounds Per Game",
+        "value": 10.5,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-43",
+        "name": "Assists Per Game",
+        "value": 3.2,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-44",
+        "name": "Field Goal Percentage",
+        "value": 52.8,
+        "category": "shooting",
+        "unit": "percentage",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-45",
+        "name": "Blocks Per Game",
+        "value": 1.5,
+        "category": "defense",
+        "unit": "blocks",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 35,
+    "height": "6'6\"",
+    "weight": 190,
+    "age": 30,
+    "photoURL": "https://example.com/photos/jonquel-jones.jpg"
+  },
+  {
+    "id": "player-12",
+    "name": "Alyssa Thomas",
+    "team": {
+      "id": "team-6",
+      "name": "Laces BC",
+      "abbreviation": "LAC",
+      "logoURL": "https://example.com/logos/laces-bc.png",
+      "city": "Miami",
+      "conference": "Eastern",
+      "division": "Southeast",
+      "wins": 7,
+      "losses": 8,
+      "winPercentage": 0.467
+    },
+    "position": "Forward",
+    "statistics": [
+      {
+        "id": "stat-46",
+        "name": "Points Per Game",
+        "value": 15.8,
+        "category": "scoring",
+        "unit": "points",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-47",
+        "name": "Rebounds Per Game",
+        "value": 9.1,
+        "category": "rebounding",
+        "unit": "rebounds",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-48",
+        "name": "Assists Per Game",
+        "value": 5.9,
+        "category": "assists",
+        "unit": "assists",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      },
+      {
+        "id": "stat-49",
+        "name": "Steals Per Game",
+        "value": 2.1,
+        "category": "defense",
+        "unit": "steals",
+        "season": "2024-25",
+        "gamesPlayed": 15
+      }
+    ],
+    "jerseyNumber": 25,
+    "height": "6'2\"",
+    "weight": 200,
+    "age": 32,
+    "photoURL": "https://example.com/photos/alyssa-thomas.jpg"
+  }
+]

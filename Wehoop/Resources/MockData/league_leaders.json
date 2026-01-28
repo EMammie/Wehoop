@@ -1,0 +1,135 @@
+{
+  "category": "points",
+  "leaders": [
+    {
+      "player": {
+        "id": "player-8",
+        "full_name": "Arike Ogunbowale",
+        "first_name": "Arike",
+        "last_name": "Ogunbowale",
+        "position": "G",
+        "jersey_number": "24",
+        "height": "67",
+        "weight": "165",
+        "age": 27,
+        "birth_date": "1997-03-02",
+        "birth_place": "Milwaukee, WI",
+        "college": "Notre Dame",
+        "photo": "https://example.com/photos/arike-ogunbowale.jpg",
+        "team": {
+          "id": "team-4",
+          "name": "Vinyl BC",
+          "alias": "VIN"
+        },
+        "team_id": "team-4"
+      },
+      "player_id": "player-8",
+      "value": 19.7,
+      "rank": 1
+    },
+    {
+      "player": {
+        "id": "player-1",
+        "full_name": "Breanna Stewart",
+        "first_name": "Breanna",
+        "last_name": "Stewart",
+        "position": "F",
+        "jersey_number": "30",
+        "height": "76",
+        "weight": "170",
+        "age": 29,
+        "birth_date": "1994-08-27",
+        "birth_place": "Syracuse, NY",
+        "college": "UConn",
+        "photo": "https://example.com/photos/breanna-stewart.jpg",
+        "team": {
+          "id": "team-1",
+          "name": "Mist BC",
+          "alias": "MST"
+        },
+        "team_id": "team-1"
+      },
+      "player_id": "player-1",
+      "value": 19.2,
+      "rank": 2
+    },
+    {
+      "player": {
+        "id": "player-2",
+        "full_name": "Jewell Loyd",
+        "first_name": "Jewell",
+        "last_name": "Loyd",
+        "position": "G",
+        "jersey_number": "24",
+        "height": "70",
+        "weight": "148",
+        "age": 30,
+        "birth_date": "1993-10-05",
+        "birth_place": "Lincolnwood, IL",
+        "college": "Notre Dame",
+        "photo": "https://example.com/photos/jewell-loyd.jpg",
+        "team": {
+          "id": "team-1",
+          "name": "Mist BC",
+          "alias": "MST"
+        },
+        "team_id": "team-1"
+      },
+      "player_id": "player-2",
+      "value": 18.9,
+      "rank": 3
+    },
+    {
+      "player": {
+        "id": "player-6",
+        "full_name": "Kahleah Copper",
+        "first_name": "Kahleah",
+        "last_name": "Copper",
+        "position": "F",
+        "jersey_number": "2",
+        "height": "73",
+        "weight": "165",
+        "age": 29,
+        "birth_date": "1994-08-28",
+        "birth_place": "Philadelphia, PA",
+        "college": "Rutgers",
+        "photo": "https://example.com/photos/kahleah-copper.jpg",
+        "team": {
+          "id": "team-3",
+          "name": "Rose BC",
+          "alias": "ROS"
+        },
+        "team_id": "team-3"
+      },
+      "player_id": "player-6",
+      "value": 18.5,
+      "rank": 4
+    },
+    {
+      "player": {
+        "id": "player-10",
+        "full_name": "Sabrina Ionescu",
+        "first_name": "Sabrina",
+        "last_name": "Ionescu",
+        "position": "G",
+        "jersey_number": "20",
+        "height": "71",
+        "weight": "165",
+        "age": 26,
+        "birth_date": "1997-12-06",
+        "birth_place": "Walnut Creek, CA",
+        "college": "Oregon",
+        "photo": "https://example.com/photos/sabrina-ionescu.jpg",
+        "team": {
+          "id": "team-5",
+          "name": "Phantom BC",
+          "alias": "PHA"
+        },
+        "team_id": "team-5"
+      },
+      "player_id": "player-10",
+      "value": 17.5,
+      "rank": 5
+    }
+  ]
+}
