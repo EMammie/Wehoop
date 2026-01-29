@@ -180,8 +180,7 @@ final class SportradarAPIClientTests: XCTestCase {
         }
         let url = client.teams()
         XCTAssertTrue(url.contains("teams.json"))
-        XCTAssertTrue(url.contains("trial/v8/en/teams"))
-        XCTAssertFalse(url.contains("//"), "Should not have double slashes")
+      XCTAssertTrue(url.contains("v8/en/league/teams"))
     }
     
     func testTeamProfile_URL() throws {

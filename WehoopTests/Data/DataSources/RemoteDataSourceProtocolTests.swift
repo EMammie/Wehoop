@@ -103,12 +103,13 @@ final class RemoteDataSourceProtocolTests: XCTestCase {
     func testPartialProtocolConformance_PlayerOnly() {
         // Given - a data source that only implements PlayerProfileDataSource
       class PlayerOnlyDataSource: RemoteDataSource, PlayerProfileDataSource {
-            func fetchGames(date: Date?) async throws -> Data { Data() }
-            func fetchPlayers() async throws -> Data { Data() }
-            func fetchTeams() async throws -> Data { Data() }
-            func fetchBoxScore(gameId: String) async throws -> Data { Data() }
-            func fetchPlayerProfile(playerId: String) async throws -> Data { Data() }
-        }
+        func fetchGame(gameId: String) async throws -> Data { return Data() }
+        func fetchGames(date: Date?) async throws -> Data { Data() }
+        func fetchPlayers() async throws -> Data { Data() }
+        func fetchTeams() async throws -> Data { Data() }
+        func fetchBoxScore(gameId: String) async throws -> Data { Data() }
+        func fetchPlayerProfile(playerId: String) async throws -> Data { Data() }
+      }
         
         let dataSource = PlayerOnlyDataSource()
         
@@ -121,14 +122,15 @@ final class RemoteDataSourceProtocolTests: XCTestCase {
     
     func testPartialProtocolConformance_TeamOnly() {
         // Given - a data source that only implements TeamProfileDataSource
-        class TeamOnlyDataSource: RemoteDataSource, TeamProfileDataSource {
-            func fetchGames(date: Date?) async throws -> Data { Data() }
-            func fetchPlayers() async throws -> Data { Data() }
-            func fetchTeams() async throws -> Data { Data() }
-            func fetchBoxScore(gameId: String) async throws -> Data { Data() }
-            func fetchTeamProfile(teamId: String) async throws -> Data { Data() }
-            func fetchTeamRoster(teamId: String) async throws -> Data { Data() }
-        }
+      class TeamOnlyDataSource: RemoteDataSource, TeamProfileDataSource {
+        func fetchGame(gameId: String) async throws -> Data { return Data() }
+        func fetchGames(date: Date?) async throws -> Data { Data() }
+        func fetchPlayers() async throws -> Data { Data() }
+        func fetchTeams() async throws -> Data { Data() }
+        func fetchBoxScore(gameId: String) async throws -> Data { Data() }
+        func fetchTeamProfile(teamId: String) async throws -> Data { Data() }
+        func fetchTeamRoster(teamId: String) async throws -> Data { Data() }
+      }
         
         let dataSource = TeamOnlyDataSource()
         

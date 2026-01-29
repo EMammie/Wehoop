@@ -8,6 +8,7 @@
 import XCTest
 @testable import Wehoop
 
+@MainActor
 final class SportradarRemoteDataSourceTests: XCTestCase {
     var mockNetworkService: MockNetworkService!
     var apiConfiguration: APIConfiguration!
@@ -45,7 +46,7 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
     }
     
     // MARK: - Fetch Teams Tests
-    
+    @MainActor
     func testFetchTeams_Success() async throws {
         guard let dataSource = dataSource else {
             throw XCTSkip("APIConfiguration not available")
@@ -488,7 +489,7 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
     }
     
     // MARK: - Integration Tests (Optional - requires real API)
-    
+    @MainActor
     func testFetchTeams_Integration() async throws {
         // Skip if API configuration is not available
         guard let apiConfiguration = APIConfiguration.load(),
@@ -670,38 +671,29 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
         XCTAssertEqual(playerDTOs.count, 0)
     }
     
+    @MainActor
     func testFetchLeagueLeaders_Success() async throws {
         guard let dataSource = dataSource else { throw XCTSkip("APIConfiguration not available") }
         
-        let leadersResponse = SportradarLeagueLeadersDTO(
-            category: "points",
-            leaders: [
-                SportradarLeagueLeadersDTO.SportradarLeaderDTO(
-                    player: SportradarPlayerDTO(
-                        id: "player-1",
-                        fullName: "Top Scorer",
-                        firstName: "Top",
-                        lastName: "Scorer",
-                        position: "G",
-                        jerseyNumber: "1",
-                        height: "72",
-                        weight: "180",
-                        age: 25,
-                        birthDate: nil,
-                        birthPlace: nil,
-                        college: nil,
-                        photo: nil,
-                        team: SportradarTeamReferenceDTO(id: "team-1", name: "Team One", alias: "T1"),
-                        teamId: "team-1",
-                        statistics: nil,
-                        averages: nil
-                    ),
-                    playerId: "player-1",
-                    value: 25.5,
-                    rank: 1
-                )
-            ]
-        )
+        // Given - Create mock league leaders response using builder
+        let leadersResponse = SportradarLeagueLeadersBuilder()
+            .withSeason(year: 2025, type: "REG")
+            .addCategory("points") { category in
+                category.addLeader(rank: 1, score: 25.5) { leader in
+                    leader
+                        .withPlayer(
+                            id: "player-1",
+                            fullName: "Top Scorer",
+                            firstName: "Top",
+                            lastName: "Scorer",
+                            position: "G",
+                            jerseyNumber: "1"
+                        )
+                        .addTeam(id: "team-1", name: "Team One")
+                }
+            }
+            .build()
+        
         let encoder = JSONEncoder()
         let responseData = try encoder.encode(leadersResponse)
         
@@ -709,28 +701,14 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
         mockNetworkService.mockResponseData = responseData
         
         // Mock teams response for internal fetchTeams call
-        let teamsResponse = SportradarTeamsResponseDTO(
-            league: nil,
-            teams: [
-                SportradarTeamDTO(
-                    id: "team-1",
-                    name: "Team One",
-                    alias: "T1",
-                    market: nil,
-                    conference: nil,
-                    division: nil,
-                    wins: nil,
-                    losses: nil,
-                    winPercentage: nil,
-                    logo: nil,
-                    founded: nil,
-                    venue: nil
-                )
-            ],
-            comment: nil
-        )
-        // Note: This test will need a more sophisticated mock to handle sequential calls
+        let teamsResponse = SportradarTeamsResponseBuilder()
+            .addTeam(id: "team-1", name: "Team One", alias: "T1")
+            .build()
         
+        // Note: This test will need a more sophisticated mock to handle sequential calls
+        // For now, the mock will return the leaders response first
+        
+        // When - Fetch league leaders
         let resultData = try await dataSource.fetchLeagueLeaders(seasonYear: nil, seasonType: "REG")
         let decoder = JSONDecoder()
         
@@ -739,6 +717,7 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
             let player: PlayerDTO
         }
         
+        // Then - Verify leaders were returned
         let leaderEntries = try decoder.decode([LeaderEntry].self, from: resultData)
         
         XCTAssertGreaterThanOrEqual(leaderEntries.count, 0) // May be 0 if player mapping fails without teams
@@ -785,26 +764,22 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
         }
     }
     
+    @MainActor
     func testFetchLeagueLeaders_EmptyLeaders() async throws {
         guard let dataSource = dataSource else { throw XCTSkip("APIConfiguration not available") }
         
-        let emptyLeadersResponse = SportradarLeagueLeadersDTO(
-            category: "points",
-            leaders: []
-        )
+        // Given - Response with a category but no leaders in it
+        let emptyLeadersResponse = SportradarLeagueLeadersBuilder()
+            .addCategory("points")  // Category exists but has no leaders
+            .build()
+        
         let encoder = JSONEncoder()
         let responseData = try encoder.encode(emptyLeadersResponse)
         
         mockNetworkService.requestShouldSucceed = true
         mockNetworkService.mockResponseData = responseData
         
-        // Mock teams response for internal fetchTeams call
-        let teamsResponse = SportradarTeamsResponseDTO(
-            league: nil,
-            teams: [],
-            comment: nil
-        )
-        
+        // When - Fetch league leaders
         let resultData = try await dataSource.fetchLeagueLeaders(seasonYear: nil, seasonType: "REG")
         let decoder = JSONDecoder()
         
@@ -813,31 +788,26 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
             let player: PlayerDTO
         }
         
+        // Then - Should return empty array
         let leaderEntries = try decoder.decode([LeaderEntry].self, from: resultData)
         
         XCTAssertEqual(leaderEntries.count, 0)
     }
     
+    @MainActor
     func testFetchLeagueLeaders_NilLeaders() async throws {
         guard let dataSource = dataSource else { throw XCTSkip("APIConfiguration not available") }
         
-        let nilLeadersResponse = SportradarLeagueLeadersDTO(
-            category: "points",
-            leaders: nil
-        )
+        // Given - Response with no categories at all
+        let nilLeadersResponse = SportradarLeagueLeadersBuilder.empty()
+        
         let encoder = JSONEncoder()
         let responseData = try encoder.encode(nilLeadersResponse)
         
         mockNetworkService.requestShouldSucceed = true
         mockNetworkService.mockResponseData = responseData
         
-        // Mock teams response for internal fetchTeams call
-        let teamsResponse = SportradarTeamsResponseDTO(
-            league: nil,
-            teams: [],
-            comment: nil
-        )
-        
+        // When - Fetch league leaders
         let resultData = try await dataSource.fetchLeagueLeaders(seasonYear: nil, seasonType: "REG")
         let decoder = JSONDecoder()
         
@@ -846,95 +816,54 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
             let player: PlayerDTO
         }
         
+        // Then - Should return empty array
         let leaderEntries = try decoder.decode([LeaderEntry].self, from: resultData)
         
         XCTAssertEqual(leaderEntries.count, 0)
     }
     
+    @MainActor
     func testFetchLeagueLeaders_MultipleLeaders() async throws {
         guard let dataSource = dataSource else { throw XCTSkip("APIConfiguration not available") }
         
-        let leadersResponse = SportradarLeagueLeadersDTO(
-            category: "rebounds",
-            leaders: [
-                SportradarLeagueLeadersDTO.SportradarLeaderDTO(
-                    player: SportradarPlayerDTO(
-                        id: "player-1",
-                        fullName: "Top Rebounder",
-                        firstName: "Top",
-                        lastName: "Rebounder",
-                        position: "F",
-                        jerseyNumber: "10",
-                        height: "76",
-                        weight: "200",
-                        age: 26,
-                        birthDate: nil,
-                        birthPlace: nil,
-                        college: nil,
-                        photo: nil,
-                        team: SportradarTeamReferenceDTO(id: "team-1", name: "Team One", alias: "T1"),
-                        teamId: "team-1",
-                        statistics: nil,
-                        averages: nil
-                    ),
-                    playerId: "player-1",
-                    value: 12.5,
-                    rank: 1
-                ),
-                SportradarLeagueLeadersDTO.SportradarLeaderDTO(
-                    player: SportradarPlayerDTO(
-                        id: "player-2",
-                        fullName: "Second Rebounder",
-                        firstName: "Second",
-                        lastName: "Rebounder",
-                        position: "C",
-                        jerseyNumber: "15",
-                        height: "78",
-                        weight: "220",
-                        age: 28,
-                        birthDate: nil,
-                        birthPlace: nil,
-                        college: nil,
-                        photo: nil,
-                        team: SportradarTeamReferenceDTO(id: "team-1", name: "Team One", alias: "T1"),
-                        teamId: "team-1",
-                        statistics: nil,
-                        averages: nil
-                    ),
-                    playerId: "player-2",
-                    value: 11.2,
-                    rank: 2
-                )
-            ]
-        )
+        // Given - Multiple leaders in the rebounds category
+        let leadersResponse = SportradarLeagueLeadersBuilder()
+            .addCategory("rebounds") { category in
+                category
+                    .addLeader(rank: 1, score: 12.5) { leader in
+                        leader
+                            .withPlayer(
+                                id: "player-1",
+                                fullName: "Top Rebounder",
+                                firstName: "Top",
+                                lastName: "Rebounder",
+                                position: "F",
+                                jerseyNumber: "10"
+                            )
+                            .addTeam(id: "team-1", name: "Team One")
+                    }
+                    .addLeader(rank: 2, score: 11.2) { leader in
+                        leader
+                            .withPlayer(
+                                id: "player-2",
+                                fullName: "Second Rebounder",
+                                firstName: "Second",
+                                lastName: "Rebounder",
+                                position: "C",
+                                jerseyNumber: "15"
+                            )
+                            .addTeam(id: "team-1", name: "Team One")
+                    }
+            }
+            .build()
+        
         let encoder = JSONEncoder()
         let responseData = try encoder.encode(leadersResponse)
         
         mockNetworkService.requestShouldSucceed = true
         mockNetworkService.mockResponseData = responseData
         
-        // Mock teams response for internal fetchTeams call
-        let teamsResponse = SportradarTeamsResponseDTO(
-            league: nil,
-            teams: [
-                SportradarTeamDTO(
-                    id: "team-1",
-                    name: "Team One",
-                    alias: "T1",
-                    market: nil,
-                    conference: nil,
-                    division: nil,
-                    wins: nil,
-                    losses: nil,
-                    winPercentage: nil,
-                    logo: nil,
-                    founded: nil,
-                    venue: nil
-                )
-            ],
-            comment: nil
-        )
-        
+        // When - Fetch league leaders
         let resultData = try await dataSource.fetchLeagueLeaders(seasonYear: nil, seasonType: "REG")
         let decoder = JSONDecoder()
         
@@ -943,39 +872,32 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
             let player: PlayerDTO
         }
         
+        // Then - Should return leader entries
         let leaderEntries = try decoder.decode([LeaderEntry].self, from: resultData)
         
         XCTAssertGreaterThanOrEqual(leaderEntries.count, 0) // May be 0 if player mapping fails without teams
     }
     
+    @MainActor
     func testFetchLeagueLeaders_LeadersWithoutPlayers() async throws {
         guard let dataSource = dataSource else { throw XCTSkip("APIConfiguration not available") }
         
-        // Create a response with leaders that have null players
-        let leadersResponse = SportradarLeagueLeadersDTO(
-            category: "assists",
-            leaders: [
-                SportradarLeagueLeadersDTO.SportradarLeaderDTO(
-                    player: nil,
-                    playerId: "missing-player",
-                    value: 8.5,
-                    rank: 1
-                )
-            ]
-        )
+        // Given - Response with leaders that have no player data (edge case)
+        let leadersResponse = SportradarLeagueLeadersBuilder()
+            .addCategory("assists") { category in
+                category.addLeader(rank: 1, score: 8.5) { leader in
+                    // Don't call withPlayer - simulates a leader without player data
+                }
+            }
+            .build()
+        
         let encoder = JSONEncoder()
         let responseData = try encoder.encode(leadersResponse)
         
         mockNetworkService.requestShouldSucceed = true
         mockNetworkService.mockResponseData = responseData
         
-        // Mock teams response for internal fetchTeams call
-        let teamsResponse = SportradarTeamsResponseDTO(
-            league: nil,
-            teams: [],
-            comment: nil
-        )
-        
+        // When - Fetch league leaders
         let resultData = try await dataSource.fetchLeagueLeaders(seasonYear: nil, seasonType: "REG")
         let decoder = JSONDecoder()
         
@@ -984,9 +906,9 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
             let player: PlayerDTO
         }
         
+        // Then - Leaders without players should be filtered out
         let leaderEntries = try decoder.decode([LeaderEntry].self, from: resultData)
         
-        // Leaders without players should be filtered out
         XCTAssertEqual(leaderEntries.count, 0)
     }
     

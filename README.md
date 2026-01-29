@@ -168,12 +168,7 @@ User Sees Update ← View ← ViewModel ← UseCase ← Repository ← DataSourc
    open Wehoop.xcodeproj
    ```
 
-3. **Configure API credentials:**
-   - Copy `Config.example.xcconfig` to `Config.xcconfig`
-   - Add your Sportradar API key to `Config.xcconfig`
-   - See [API_CONFIGURATION_SETUP.md](API_CONFIGURATION_SETUP.md) for detailed instructions
-
-4. **Build and run:**
+3. **Build and run:**
    - Select your target device or simulator
    - Press `⌘R` to build and run
 

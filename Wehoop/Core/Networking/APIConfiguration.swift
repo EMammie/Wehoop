@@ -9,8 +9,17 @@ import Foundation
 
 /// Configuration for API access, loaded from build settings via Info.plist
 struct APIConfiguration {
-    /// Base URL for the Sportradar API
+    /// Base URL for the Sportradar API (always includes scheme, e.g. https://)
     let baseURL: String
+    
+    /// Ensures the base URL has a scheme so built URLs are valid and not double-prefixed by the network layer.
+    private static func normalizeBaseURL(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return trimmed
+        }
+        return "https://\(trimmed)"
+    }
     
     /// API key for authentication
     let apiKey: String
@@ -35,10 +44,12 @@ struct APIConfiguration {
             throw APIConfigurationError.missingInfoPlist
         }
         
-        guard let baseURL = infoDictionary["API_BASE_URL_PLIST_KEY"] as? String,
-              !baseURL.isEmpty else {
+        guard let rawBaseURL = infoDictionary["API_BASE_URL_PLIST_KEY"] as? String,
+              !rawBaseURL.isEmpty else {
             throw APIConfigurationError.missingBaseURL
         }
+        // Ensure base URL has a scheme so built URLs are valid and not re-processed by the network layer
+        let baseURL = APIConfiguration.normalizeBaseURL(rawBaseURL)
         
         guard let apiKey = infoDictionary["API_KEY_PLIST_KEY"] as? String,
               !apiKey.isEmpty,

@@ -9,14 +9,14 @@ import XCTest
 @testable import Wehoop
 
 /// Tests for MockLeagueDataStore to ensure it correctly implements LeagueDataSource
-final class MockLeagueDataStoreTests: XCTestCase {
-    var sut: MockLeagueDataStore!
+final class MockLeagueLeadersDataStoreTests: XCTestCase {
+    var sut: MockLeagueLeadersDataStore!
     var testBundle: Bundle!
     
     override func setUp() {
         super.setUp()
         testBundle = Bundle.mockDataBundle
-        sut = MockLeagueDataStore(bundle: testBundle, simulatedDelay: 0.01)
+        sut = MockLeagueLeadersDataStore(bundle: testBundle, simulatedDelay: 0.01)
     }
     
     override func tearDown() {
@@ -29,7 +29,7 @@ final class MockLeagueDataStoreTests: XCTestCase {
     
     func testMockLeagueDataStore_ConformsToLeagueDataSource() {
         // Given
-        let dataStore = MockLeagueDataStore()
+        let dataStore = MockLeagueLeadersDataStore()
         
         // Then
         XCTAssertTrue(dataStore is LeagueDataSource, "Should conform to LeagueDataSource")
