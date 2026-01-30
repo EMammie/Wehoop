@@ -26,7 +26,7 @@ Wehoop is a modern iOS application designed to provide comprehensive coverage of
 
 A quick walkthrough of the app's onboarding experience and key features:
 
-![Wehoop onboarding demo](docs/onboarding-demo.png)
+![Wehoop onboarding demo](docs/onboarding-demo.gif)
 
 ## 🏗️ Architecture
 
