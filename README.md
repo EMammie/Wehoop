@@ -24,24 +24,9 @@ Wehoop is a modern iOS application designed to provide comprehensive coverage of
 
 ### Onboarding Flow & App Usage
 
-Watch a short video demonstrating the app's onboarding experience and key features:
+A quick walkthrough of the app's onboarding experience and key features:
 
-<!-- TODO: Add video link here -->
-<!-- 
-To add your video:
-1. Upload your video to a hosting service (YouTube, Vimeo, etc.)
-2. Replace the placeholder below with your video embed code or link
-3. Or add a direct link: [Watch Demo Video](your-video-url)
--->
-
-**Video Coming Soon** - Check back for a walkthrough of the onboarding flow and app usage.
-
-<!-- Example embed format:
-<video width="100%" controls>
-  <source src="path/to/onboarding-demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
--->
+![Wehoop onboarding demo](docs/onboarding-demo.png)
 
 ## 🏗️ Architecture
 
