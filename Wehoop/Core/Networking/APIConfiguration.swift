@@ -88,7 +88,7 @@ struct APIConfiguration {
         let base = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
         
         // Build URL with version parameter
-        var urlString = "\(base)/\(cleanPath)"
+        let urlString = "\(base)/\(cleanPath)"
         
         // Add version parameter
         var queryItems = [URLQueryItem(name: "version", value: apiVersion)]

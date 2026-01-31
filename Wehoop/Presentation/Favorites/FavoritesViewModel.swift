@@ -59,7 +59,7 @@ class FavoritesViewModel: ObservableObject {
             do {
                 try await manageFavoritesUseCase.removeFavorite(playerId: playerId)
                 // Reload favorites to update the list
-                await loadFavorites()
+                loadFavorites()
             } catch {
                 self.error = error
             }

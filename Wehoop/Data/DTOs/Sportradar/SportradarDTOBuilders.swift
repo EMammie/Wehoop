@@ -6,7 +6,6 @@
 //
 
 import Foundation
-@testable import Wehoop
 
 // MARK: - Test Builders for Sportradar DTOs
 // These builders provide a fluent API for creating test data with sensible defaults

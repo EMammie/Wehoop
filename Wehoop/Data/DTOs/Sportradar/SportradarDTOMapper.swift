@@ -294,7 +294,7 @@ struct SportradarDTOMapper {
     ) throws -> [GameDTO] {
         var mappingErrors: [Error] = []
         
-        let mappedGames = try sportradarGames.compactMap { sportradarGame -> GameDTO? in
+        let mappedGames = sportradarGames.compactMap { sportradarGame -> GameDTO? in
             // Get home and away team DTOs
             // Support both new structure (home/away objects with id) and legacy (homeId/awayId)
             let homeTeamId = sportradarGame.home?.id ?? sportradarGame.homeId
@@ -476,7 +476,6 @@ struct SportradarDTOMapper {
                     averages: nil
                 )
                 
-                do {
                     var mappedPlayer = fullPlayerDTO.toPlayerDTO(teamDTO: teamDTO)
                     
                     // Extract stat value from rankEntry (prefer average for per-game stats)
@@ -528,11 +527,7 @@ struct SportradarDTOMapper {
                     )
                     
                     result.append((category: categoryName, player: mappedPlayer))
-                } catch {
-                    // Log mapping error but continue with other leaders
-                    print("Warning: Failed to map player '\(playerId)' in league leaders: \(error)")
-                    continue
-                }
+
             }
         }
         

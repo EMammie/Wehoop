@@ -6,7 +6,6 @@
 //
 
 import Foundation
-@testable import Wehoop
 
 /*
  MARK: - Example Usage in Tests

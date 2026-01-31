@@ -68,9 +68,9 @@ struct BoxScoreDTO: Codable {
         return BoxScore(
             homeScore: homeScore,
             awayScore: awayScore,
-            homeStats: try homeStats.toDomain(),
-            awayStats: try awayStats.toDomain(),
-            quarters: try quarters?.map { try $0.toDomain() },
+            homeStats: homeStats.toDomain(),
+            awayStats: awayStats.toDomain(),
+            quarters:  quarters?.map { $0.toDomain() },
             lastUpdated: lastUpdatedDate
         )
     }

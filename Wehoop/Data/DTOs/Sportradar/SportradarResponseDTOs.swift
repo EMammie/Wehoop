@@ -92,8 +92,8 @@ extension SportradarGameSummaryDTO {
         // For historical games, if status is scheduled but we have scores, it's likely finished
         // Check if game date is in the past and we have score data
         if gameStatus == .scheduled {
-            let calendar = Calendar.current
-            if let gameDate = dateFormatter.date(from: scheduled ?? ""), 
+            let _ = Calendar.current
+            if let gameDate = dateFormatter.date(from: scheduled ?? ""),
                gameDate < Date(),
                (home?.points ?? home?.statistics?.points ?? home?.statistics?.totalPoints ?? home?.statistics?.teamPoints ?? 0) > 0 ||
                (away?.points ?? away?.statistics?.points ?? away?.statistics?.totalPoints ?? away?.statistics?.teamPoints ?? 0) > 0 {
@@ -1869,7 +1869,7 @@ struct SportradarPlayerProfileDTO: Codable {
         let stats = firstTeam.total
 
         // Ensure total exists for gamesPlayed reference
-        let total = firstTeam.total
+        let _ = firstTeam.total
         
         var statisticDTOs: [StatisticDTO] = []
         
