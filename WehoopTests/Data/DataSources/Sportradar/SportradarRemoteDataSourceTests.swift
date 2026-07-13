@@ -41,7 +41,8 @@ final class SportradarRemoteDataSourceTests: XCTestCase {
         apiClient = SportradarAPIClient(apiConfiguration: apiConfiguration)
         dataSource = SportradarRemoteDataSource(
             networkService: mockNetworkService,
-            apiClient: apiClient
+            apiClient: apiClient,
+            rateLimiter: RateLimiter(minimumInterval: 0)
         )
     }
     
