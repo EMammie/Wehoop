@@ -22,7 +22,10 @@ class RealTimeUpdateServiceCoordinator: RealTimeUpdateService {
     private var websocketURL: String?
     private var pollingEndpoint: String?
     private var pollingInterval: TimeInterval = 5.0
-    
+
+    /// Guards only the stored configuration above. Never held across calls
+    /// into the websocket/polling services or subject sends - callbacks from
+    /// those could re-enter the coordinator and deadlock.
     private let lock = NSLock()
     
     var connectionMode: ConnectionMode {
@@ -62,63 +65,54 @@ class RealTimeUpdateServiceCoordinator: RealTimeUpdateService {
     }
     
     func stop() {
-        lock.withLock {
-            webSocketService.disconnect()
-            pollingService.stopPolling()
-            modeSubject.send(.disconnected)
-        }
+        webSocketService.disconnect()
+        pollingService.stopPolling()
+        modeSubject.send(.disconnected)
     }
-    
+
     func switchToPolling() {
-        lock.withLock {
-            guard let endpoint = pollingEndpoint else { return }
-            
-            webSocketService.disconnect()
-            modeSubject.send(.polling)
-            pollingService.startPolling(interval: pollingInterval, endpoint: endpoint)
-        }
+        let (endpoint, interval) = lock.withLock { (pollingEndpoint, pollingInterval) }
+        guard let endpoint = endpoint else { return }
+
+        webSocketService.disconnect()
+        modeSubject.send(.polling)
+        pollingService.startPolling(interval: interval, endpoint: endpoint)
     }
-    
+
     func reconnectWebSocket() async {
-        var  url: String?
-        lock.withLock {
-            url = websocketURL
-        }
-        
+        let url = lock.withLock { websocketURL }
+
         guard let url = url else { return }
-        
+
         // Stop polling before attempting WebSocket
         pollingService.stopPolling()
-        
+
         await attemptWebSocketConnection(url: url)
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func attemptWebSocketConnection(url: String) async {
         do {
             try await webSocketService.connect()
-            lock.withLock {
-                modeSubject.send(.websocket)
-                // Stop polling if it was running
-                pollingService.stopPolling()
-            }
+            modeSubject.send(.websocket)
+            // Stop polling if it was running
+            pollingService.stopPolling()
         } catch {
             // WebSocket failed, fall back to polling
             await fallbackToPolling()
         }
     }
-    
+
     private func fallbackToPolling() async {
-        lock.withLock {
-            guard let endpoint = pollingEndpoint else {
-                modeSubject.send(.disconnected)
-                return
-            }
-            
-            modeSubject.send(.polling)
-            pollingService.startPolling(interval: pollingInterval, endpoint: endpoint)
+        let (endpoint, interval) = lock.withLock { (pollingEndpoint, pollingInterval) }
+        guard let endpoint = endpoint else {
+            modeSubject.send(.disconnected)
+            return
         }
+
+        modeSubject.send(.polling)
+        pollingService.startPolling(interval: interval, endpoint: endpoint)
     }
     
     private func setupWebSocketSubscription() {

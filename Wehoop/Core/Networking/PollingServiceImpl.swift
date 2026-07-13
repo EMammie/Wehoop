@@ -13,36 +13,44 @@ class PollingServiceImpl: PollingService {
     private let networkService: NetworkService
     private let subject = PassthroughSubject<Data, Error>()
     private var pollingTask: Task<Void, Never>?
-    private var cancellables = Set<AnyCancellable>()
-    
+    /// Cap for exponential backoff so a long outage doesn't push retries out indefinitely
+    private let maxBackoffInterval: TimeInterval = 60
+
     var dataPublisher: AnyPublisher<Data, Error> {
         subject.eraseToAnyPublisher()
     }
-    
+
     init(networkService: NetworkService) {
         self.networkService = networkService
     }
-    
+
     func startPolling(interval: TimeInterval, endpoint: String) {
         stopPolling() // Stop any existing polling
-        
-        pollingTask = Task {
+
+        pollingTask = Task { [maxBackoffInterval] in
+            var consecutiveFailures = 0
+
             while !Task.isCancelled {
                 do {
                     let data = try await networkService.request(endpoint)
+                    consecutiveFailures = 0
                     if !Task.isCancelled {
                         subject.send(data)
                     }
                 } catch {
-                    // Log error but continue polling - don't break the stream
-                    // Errors are sent to subscribers but polling continues
-                    if !Task.isCancelled {
-                        // In a production app, you might want to use a separate error publisher
-                        // For now, we'll just continue polling on the next interval
-                    }
+                    // Log and keep polling with exponential backoff so a down
+                    // endpoint isn't hammered at the base interval forever.
+                    // The stream itself stays alive (sending a Combine failure
+                    // would terminate it for all subscribers).
+                    consecutiveFailures += 1
+                    Logger.error("Polling \(endpoint) failed (attempt \(consecutiveFailures)): \(error.localizedDescription)")
                 }
-                
-                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+
+                let backoffMultiplier = pow(2.0, Double(min(consecutiveFailures, 6)))
+                let delay = consecutiveFailures == 0
+                    ? interval
+                    : min(interval * backoffMultiplier, maxBackoffInterval)
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }
         }
     }
