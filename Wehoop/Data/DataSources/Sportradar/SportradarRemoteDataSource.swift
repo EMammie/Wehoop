@@ -151,42 +151,92 @@ enum SportradarRemoteDataSourceError: LocalizedError {
 class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, TeamProfileDataSource, LeagueDataSource {
     private let networkService: NetworkService
     private let apiClient: SportradarAPIClient
-    
+    private let rateLimiter: RateLimiter
+    private let teamsCache = TeamsCache()
+    /// Teams metadata changes rarely; reuse it instead of re-fetching per request
+    private let teamsCacheTTL: TimeInterval = 15 * 60
+
     /// Initialize the Sportradar remote data source
     /// - Parameters:
     ///   - networkService: Network service for making HTTP requests
     ///   - apiClient: Sportradar API client for building endpoint URLs
-    init(networkService: NetworkService, apiClient: SportradarAPIClient) {
+    ///   - rateLimiter: Spaces outbound requests; defaults to Sportradar's
+    ///     trial-key limit of 1 request/second
+    init(
+        networkService: NetworkService,
+        apiClient: SportradarAPIClient,
+        rateLimiter: RateLimiter = RateLimiter(minimumInterval: 1.0)
+    ) {
         self.networkService = networkService
         self.apiClient = apiClient
+        self.rateLimiter = rateLimiter
     }
-    
-    // MARK: - RemoteDataSource Implementation
-    
-    func fetchTeams() async throws -> Data {
+
+    // MARK: - Teams Caching
+
+    /// Memoizes the teams list and coalesces concurrent fetches into one
+    /// in-flight request, so callers that need team metadata for mapping
+    /// don't each pay a network round-trip.
+    private actor TeamsCache {
+        private var inFlight: Task<[TeamDTO], Error>?
+        private var fetchedAt: Date?
+
+        func teams(ttl: TimeInterval, fetch: @escaping () async throws -> [TeamDTO]) async throws -> [TeamDTO] {
+            if let inFlight, let fetchedAt, Date().timeIntervalSince(fetchedAt) < ttl {
+                return try await inFlight.value
+            }
+            let task = Task { try await fetch() }
+            inFlight = task
+            fetchedAt = Date()
+            do {
+                return try await task.value
+            } catch {
+                // Don't cache failures
+                inFlight = nil
+                fetchedAt = nil
+                throw error
+            }
+        }
+    }
+
+    /// Fetch the teams list, served from the in-memory cache when fresh
+    private func cachedTeamDTOs() async throws -> [TeamDTO] {
+        try await teamsCache.teams(ttl: teamsCacheTTL) { [self] in
+            try await fetchTeamsFromNetwork()
+        }
+    }
+
+    /// Teams keyed by id, for DTO mapping
+    private func cachedTeamsDictionary() async throws -> [String: TeamDTO] {
+        let teamDTOs = try await cachedTeamDTOs()
+        return Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
+    }
+
+    private func fetchTeamsFromNetwork() async throws -> [TeamDTO] {
         // Build URL using API client
         let url = apiClient.teams()
-        
+
         // Validate URL
         guard URL(string: url) != nil else {
             throw SportradarRemoteDataSourceError.invalidURL(url)
         }
-        
+
         do {
+            try await rateLimiter.waitForSlot()
             // Fetch and decode Sportradar response
             let sportradarResponse: SportradarTeamsResponseDTO = try await networkService.request(url)
-            
+
             // Map to app DTOs
             let teamDTOs = SportradarDTOMapper.mapTeams(sportradarResponse)
-            
+
             // Validate we got data
             guard !teamDTOs.isEmpty else {
                 throw SportradarRemoteDataSourceError.emptyResponse(endpoint: "teams")
             }
-            
-            // Encode back to Data for repository
-            let encoder = JSONEncoder()
-            return try encoder.encode(teamDTOs)
+
+            return teamDTOs
+        } catch let error as SportradarRemoteDataSourceError {
+            throw error
         } catch let error as NetworkError {
             // Map NetworkError to our custom error type
             throw mapNetworkError(error, endpoint: "teams")
@@ -199,6 +249,14 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
             }
             throw SportradarRemoteDataSourceError.networkError(error)
         }
+    }
+
+    // MARK: - RemoteDataSource Implementation
+
+    func fetchTeams() async throws -> Data {
+        let teamDTOs = try await cachedTeamDTOs()
+        let encoder = JSONEncoder()
+        return try encoder.encode(teamDTOs)
     }
     
     func fetchPlayers() async throws -> Data {
@@ -234,26 +292,24 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         
         do {
             // Fetch schedule data
+            try await rateLimiter.waitForSlot()
             let scheduleData: Data = try await networkService.request(url)
             let decoder = JSONDecoder()
-            
+
             // Try to decode as schedule response
             do {
                 let schedule = try decoder.decode(SportradarScheduleDTO.self, from: scheduleData)
-                
+
                 guard let games = schedule.games, !games.isEmpty else {
                     // Empty schedule is valid - return empty array
                     let emptyGames: [GameDTO] = []
                     let encoder = JSONEncoder()
                     return try encoder.encode(emptyGames)
                 }
-                
-                // Fetch teams for mapping (needed for GameDTO)
-                let teamsData = try await fetchTeams()
-                let teamsDecoder = JSONDecoder()
-                let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-                let teamsDict = Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
-                
+
+                // Teams metadata needed for GameDTO mapping
+                let teamsDict = try await cachedTeamsDictionary()
+
                 // Map games using mapper
                 do {
                     let gameDTOs = try SportradarDTOMapper.mapSchedule(schedule, teams: teamsDict)
@@ -300,14 +356,12 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         
         do {
             // Fetch and decode Sportradar response
+            try await rateLimiter.waitForSlot()
             let gameSummary: SportradarGameSummaryDTO = try await networkService.request(url)
-            
-            // Fetch teams for mapping (needed for GameDTO)
-            let teamsData = try await fetchTeams()
-            let teamsDecoder = JSONDecoder()
-            let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-            let teamsDict = Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
-            
+
+            // Teams metadata needed for GameDTO mapping
+            let teamsDict = try await cachedTeamsDictionary()
+
             // Map to app GameDTO (which includes boxscore)
             let gameDTO: GameDTO
             do {
@@ -315,7 +369,7 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
             } catch {
                 throw SportradarRemoteDataSourceError.mappingError(error, endpoint: "gameSummary")
             }
-            
+
             // Extract boxscore from game
             guard let boxScoreDTO = gameDTO.boxScore else {
                 throw SportradarRemoteDataSourceError.boxScoreNotFound(gameId: gameId)
@@ -348,14 +402,12 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         
         do {
             // Fetch and decode Sportradar response
+            try await rateLimiter.waitForSlot()
             let gameSummary: SportradarGameSummaryDTO = try await networkService.request(url)
-            
-            // Fetch teams for mapping (needed for GameDTO)
-            let teamsData = try await fetchTeams()
-            let teamsDecoder = JSONDecoder()
-            let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-            let teamsDict = Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
-            
+
+            // Teams metadata needed for GameDTO mapping
+            let teamsDict = try await cachedTeamsDictionary()
+
             // Map to app GameDTO (which includes boxscore and all game details)
             let gameDTO: GameDTO
             do {
@@ -393,13 +445,12 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         }
         
         do {
+            try await rateLimiter.waitForSlot()
             let playerProfile: SportradarPlayerProfileDTO = try await networkService.request(url)
-            
-            // Fetch teams to get team DTO for the player
-            let teamsData = try await fetchTeams()
-            let teamsDecoder = JSONDecoder()
-            let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-            
+
+            // Teams metadata to resolve the player's team
+            let teamDTOs = try await cachedTeamDTOs()
+
             // Try to find player's team from profile or teams list
             let teamDTO: TeamDTO?
             if let teamRef = playerProfile.team,
@@ -449,6 +500,7 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         
         do {
             // Team profile likely returns a SportradarTeamDTO (possibly with more fields)
+            try await rateLimiter.waitForSlot()
             let teamProfile: SportradarTeamDTO = try await networkService.request(url)
             let teamDTO = SportradarDTOMapper.mapTeam(teamProfile)
             let encoder = JSONEncoder()
@@ -476,17 +528,15 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
             // Team roster likely returns an array of players or a roster response
             // For now, we'll try to decode as an array of SportradarPlayerDTO
             // If the API returns a different structure, we'll need to create a DTO for it
+            try await rateLimiter.waitForSlot()
             let rosterData: Data = try await networkService.request(url)
             let decoder = JSONDecoder()
-            
+
             // Try to decode as array of players first
             if let players = try? decoder.decode([SportradarPlayerDTO].self, from: rosterData) {
-                // Fetch teams for player team references
-                let teamsData = try await fetchTeams()
-                let teamsDecoder = JSONDecoder()
-                let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-                let teamsDict = Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
-                
+                // Teams metadata for player team references
+                let teamsDict = try await cachedTeamsDictionary()
+
                 let playerDTOs = SportradarDTOMapper.mapPlayers(players, teams: teamsDict)
                 let encoder = JSONEncoder()
                 return try encoder.encode(playerDTOs)
@@ -522,14 +572,12 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         }
         
         do {
+            try await rateLimiter.waitForSlot()
             let leadersResponse: SportradarLeagueLeadersDTO = try await networkService.request(url)
-            
-            // Fetch teams for player team references
-            let teamsData = try await fetchTeams()
-            let teamsDecoder = JSONDecoder()
-            let teamDTOs = try teamsDecoder.decode([TeamDTO].self, from: teamsData)
-            let teamsDict = Dictionary(uniqueKeysWithValues: teamDTOs.map { ($0.id, $0) })
-            
+
+            // Teams metadata for player team references
+            let teamsDict = try await cachedTeamsDictionary()
+
             let leaders = SportradarDTOMapper.mapLeagueLeaders(leadersResponse, teams: teamsDict)
             
             // Encode as array of dictionaries with category and player
@@ -560,6 +608,7 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         }
         
         do {
+            try await rateLimiter.waitForSlot()
             let standingsResponse: SportradarStandingsDTO = try await networkService.request(url)
             let teamDTOs = SportradarDTOMapper.mapStandings(standingsResponse)
             let encoder = JSONEncoder()
@@ -585,6 +634,7 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         }
         
         do {
+            try await rateLimiter.waitForSlot()
             let injuriesResponse: SportradarInjuriesResponseDTO = try await networkService.request(url)
             let leagueInjuries = try injuriesResponse.toDomain()
             let encoder = JSONEncoder()
@@ -612,6 +662,7 @@ class SportradarRemoteDataSource: RemoteDataSource, PlayerProfileDataSource, Tea
         }
         
         do {
+            try await rateLimiter.waitForSlot()
             let hierarchyResponse: SportradarLeagueHierarchyDTO = try await networkService.request(url)
             let teamDTOs = hierarchyResponse.toTeamDTOs()
             let encoder = JSONEncoder()

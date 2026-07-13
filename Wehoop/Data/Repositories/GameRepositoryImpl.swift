@@ -282,11 +282,15 @@ class GameRepositoryImpl: GameRepository {
             return games
         }
         
-        // Fetch box scores in parallel using TaskGroup
+        // Fetch box scores in parallel using TaskGroup, bounded so a long
+        // schedule doesn't fire dozens of concurrent requests at the API
+        let maxConcurrentFetches = 3
         var enrichedGames = games
-        
+
         await withTaskGroup(of: (gameId: String, boxScore: BoxScore?).self) { group in
-            for game in gamesNeedingBoxScores {
+            var remainingGames = gamesNeedingBoxScores.makeIterator()
+
+            func addFetchTask(for game: Game) {
                 group.addTask {
                     do {
                         let boxScoreData = try await self.remoteDataSource.fetchBoxScore(gameId: game.id)
@@ -301,9 +305,18 @@ class GameRepositoryImpl: GameRepository {
                     }
                 }
             }
-            
-            // Collect results and update games
+
+            for _ in 0..<maxConcurrentFetches {
+                if let game = remainingGames.next() {
+                    addFetchTask(for: game)
+                }
+            }
+
+            // Collect results and update games, starting the next fetch as each completes
             for await result in group {
+                if let game = remainingGames.next() {
+                    addFetchTask(for: game)
+                }
                 if let index = enrichedGames.firstIndex(where: { $0.id == result.gameId }),
                    let boxScore = result.boxScore {
                     // Update game with box score
