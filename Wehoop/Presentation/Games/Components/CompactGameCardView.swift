@@ -205,6 +205,7 @@ struct CompactGameCardView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     VStack(spacing: 12) {
         // Live game example
@@ -251,3 +252,4 @@ struct CompactGameCardView: View {
     .environment(\.theme, Theme.wehoop)
     .environment(\.teamThemeProvider, TeamThemeProvider())
 }
+#endif

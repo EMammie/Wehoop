@@ -160,6 +160,7 @@ class PlayerProfileViewModel: ObservableObject {
     }
 }
 
+#if DEBUG
 #Preview("Player Profile - Loaded") {
     let player = GameFixtures.breannaStewart()
     let mockRepo = MockPlayerRepository(players: [player])
@@ -212,4 +213,4 @@ class PlayerProfileViewModel: ObservableObject {
 
     PlayerProfileView(playerId: player.id, viewModel: viewModel)
   }
-
+#endif

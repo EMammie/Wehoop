@@ -7,6 +7,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Fixture class for creating Game-related test data for previews and tests
 class GameFixtures {
     
@@ -931,3 +932,4 @@ class GameFixtures {
         allPlayers().filter { $0.team.id == team.id }
     }
 }
+#endif

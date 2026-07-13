@@ -145,6 +145,7 @@ struct GamesView: View {
     }
 }
 
+#if DEBUG
 #Preview("Loading State") {
     let viewModel = PreviewGamesViewModel(state: .loading)
     return GamesView(viewModel: viewModel)
@@ -283,3 +284,4 @@ struct GamesView: View {
     }
     
 }
+#endif

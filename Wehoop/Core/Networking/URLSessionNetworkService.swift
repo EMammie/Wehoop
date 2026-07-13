@@ -43,7 +43,11 @@ class URLSessionNetworkService: NetworkService {
     func request<T: Decodable>(_ endpoint: String, headers: [String: String]? = nil) async throws -> T {
         let data = try await request(endpoint, headers: headers)
         let decoder = JSONDecoder()
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw NetworkError.decodingError(error)
+        }
     }
     
     func request(_ endpoint: String, headers: [String: String]? = nil) async throws -> Data {

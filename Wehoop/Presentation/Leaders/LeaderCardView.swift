@@ -76,6 +76,7 @@ struct LeaderCardView: View {
     }
 }
 
+#if DEBUG
 #Preview("Scoring - Rank 2") {
     LeaderCardView(player: GameFixtures.breannaStewart(), rank: 2, category: .scoring)
         .padding()
@@ -129,3 +130,4 @@ struct LeaderCardView: View {
         .padding()
         .background(Color(.systemGroupedBackground))
 }
+#endif

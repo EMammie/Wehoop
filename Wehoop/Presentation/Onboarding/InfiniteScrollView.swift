@@ -52,10 +52,6 @@ struct InfiniteScrollView<Content: View>: View {
     }
 }
 
-#Preview {
-    ContentView()
-}
-
 fileprivate struct InfiniteScrollHelper: UIViewRepresentable {
     @Binding var contentSize: CGSize
     @Binding var declarationRate: UIScrollView.DecelerationRate

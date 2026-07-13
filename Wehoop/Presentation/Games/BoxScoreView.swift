@@ -185,6 +185,7 @@ struct BoxScoreView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 #Preview("Box Score - Finished Game") {
     BoxScoreView(
         game: GameFixtures.finishedGame(),
@@ -222,3 +223,4 @@ struct BoxScoreView: View {
         )
     )
 }
+#endif

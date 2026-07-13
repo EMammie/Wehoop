@@ -63,31 +63,7 @@ class SportradarAPIClient {
     }
     
     // MARK: - Daily Endpoints
-    
-    /// Daily Change Log - IDs and timestamps for modified data
-    /// - Parameter date: Date for the change log (format: YYYY/MM/DD)
-    /// - Returns: Full URL string
-    func dailyChanges(date: Date) -> String {
-        let dateString = formatDate(date)
-        return buildURL(
-            resource: .league,
-            pathComponents: [dateString],
-            endpoint: .dailyChanges
-        )
-    }
-    
-    /// Daily Injuries - Details for all injuries updated on a date
-    /// - Parameter date: Date for injuries (format: YYYY/MM/DD)
-    /// - Returns: Full URL string
-    func dailyInjuries(date: Date) -> String {
-        let dateString = formatDate(date)
-        return buildURL(
-            resource: .league,
-            pathComponents: [dateString],
-            endpoint: .dailyInjuries
-        )
-    }
-    
+
     /// Daily Schedule - Game details for league-defined day
     /// - Parameter date: Date for schedule (format: YYYY/MM/DD)
     /// - Returns: Full URL string
@@ -100,33 +76,8 @@ class SportradarAPIClient {
         )
     }
     
-    /// Daily Transfers - Information for transfers added/edited during day
-    /// - Parameter date: Date for transfers (format: YYYY/MM/DD)
-    /// - Returns: Full URL string
-    func dailyTransfers(date: Date) -> String {
-        let dateString = formatDate(date)
-        return buildURL(
-            resource: .league,
-            pathComponents: [dateString],
-            endpoint: .dailyTransfers
-        )
-    }
-    
     // MARK: - Game Endpoints
-    
-    /// Game Boxscore - Team scores by quarter and leader statistics
-    /// 
-    /// Example URL: https://api.sportradar.com/unrivaled/trial/v8/en/games/838316ea-ab7b-4581-a1dd-74229d1970d5/boxscore.json
-    /// - Parameter gameId: Unique game identifier (e.g., "838316ea-ab7b-4581-a1dd-74229d1970d5")
-    /// - Returns: Full URL string following pattern: {base}/{access}/{version}/{language}/games/{gameId}/boxscore.json
-    func gameBoxscore(gameId: String) -> String {
-        return buildURL(
-            resource: .games,
-            pathComponents: [gameId],
-            endpoint: .gameBoxscore
-        )
-    }
-    
+
     /// Game Summary - Top-level boxscore with detailed stats
     /// - Parameter gameId: Unique game identifier
     /// - Returns: Full URL string
@@ -135,17 +86,6 @@ class SportradarAPIClient {
             resource: .games,
             pathComponents: [gameId],
             endpoint: .gameSummary
-        )
-    }
-    
-    /// Game Play-by-Play - Detailed real-time game events
-    /// - Parameter gameId: Unique game identifier
-    /// - Returns: Full URL string
-    func gamePlayByPlay(gameId: String) -> String {
-        return buildURL(
-            resource: .games,
-            pathComponents: [gameId],
-            endpoint: .gamePlayByPlay
         )
     }
     
@@ -233,102 +173,6 @@ class SportradarAPIClient {
         )
     }
     
-    /// Rankings - League ranking for each team
-    /// - Returns: Full URL string
-    func rankings() -> String {
-        return buildURL(
-            resource: .league,
-            endpoint: .rankings
-        )
-    }
-    
-    /// Seasonal Statistics - Complete team and player statistics
-    /// - Parameters:
-    ///   - seasonId: Season identifier
-    ///   - seasonType: Type of season (regular, playoffs, etc.)
-    /// - Returns: Full URL string
-    func seasonalStatistics(seasonId: String, seasonType: String? = nil) -> String {
-        var pathComponents = [seasonId]
-        if let seasonType = seasonType {
-            pathComponents.append(seasonType)
-        }
-        return buildURL(
-            resource: .league,
-            pathComponents: pathComponents,
-            endpoint: .seasonalStatistics
-        )
-    }
-    
-    // MARK: - Season Endpoints
-    
-    /// Seasons - List of all available seasons
-    /// - Returns: Full URL string
-    func seasons() -> String {
-        return buildURL(
-            resource: .league,
-            endpoint: .seasons
-        )
-    }
-    
-    // MARK: - Series Endpoints
-    
-    /// Series Schedule - Schedule details for every match-up in a series
-    /// - Parameter seriesId: Unique series identifier
-    /// - Returns: Full URL string
-    func seriesSchedule(seriesId: String) -> String {
-        return buildURL(
-            resource: .series,
-            pathComponents: [seriesId],
-            endpoint: .seriesSchedule
-        )
-    }
-    
-    /// Series Statistics - Detailed team and player statistics for a series
-    /// - Parameter seriesId: Unique series identifier
-    /// - Returns: Full URL string
-    func seriesStatistics(seriesId: String) -> String {
-        return buildURL(
-            resource: .series,
-            pathComponents: [seriesId],
-            endpoint: .seriesStatistics
-        )
-    }
-    
-    // MARK: - Tournament Endpoints
-    
-    /// Tournament List - Summarized list of all tournaments
-    /// - Parameter seasonId: Season identifier
-    /// - Returns: Full URL string
-    func tournamentList(seasonId: String) -> String {
-        return buildURL(
-            resource: .tournaments,
-            pathComponents: [seasonId],
-            endpoint: .tournamentList
-        )
-    }
-    
-    /// Tournament Schedule - Date, time, location for tournament match-ups
-    /// - Parameter tournamentId: Unique tournament identifier
-    /// - Returns: Full URL string
-    func tournamentSchedule(tournamentId: String) -> String {
-        return buildURL(
-            resource: .tournaments,
-            pathComponents: [tournamentId],
-            endpoint: .tournamentSchedule
-        )
-    }
-    
-    /// Tournament Summary - Tournament information including location and status
-    /// - Parameter tournamentId: Unique tournament identifier
-    /// - Returns: Full URL string
-    func tournamentSummary(tournamentId: String) -> String {
-        return buildURL(
-            resource: .tournaments,
-            pathComponents: [tournamentId],
-            endpoint: .tournamentSummary
-        )
-    }
-    
     // MARK: - Injury Endpoints
     
     /// Injuries - Information concerning all active player injuries
@@ -337,19 +181,6 @@ class SportradarAPIClient {
         return buildURL(
             resource: .league,
             endpoint: .injuries
-        )
-    }
-    
-    // MARK: - Schedule Endpoints
-    
-    /// Schedule - Date, time, location for every match-up in full season
-    /// - Parameter seasonId: Season identifier
-    /// - Returns: Full URL string
-    func schedule(seasonId: String) -> String {
-        return buildURL(
-            resource: .league,
-            pathComponents: [seasonId],
-            endpoint: .dailySchedule // Reusing schedule endpoint
         )
     }
     

@@ -337,6 +337,7 @@ struct GamesViewV2: View {
     }
 }
 
+#if DEBUG
 #Preview("Loading State") {
     let viewModel = PreviewGamesViewModel(state: .loading)
     return GamesViewV2(viewModel: viewModel)
@@ -376,3 +377,4 @@ struct GamesViewV2: View {
         .environment(\.dependencyContainer, configureDependencyContainer())
         .environment(\.teamThemeProvider, TeamThemeProvider())
 }
+#endif

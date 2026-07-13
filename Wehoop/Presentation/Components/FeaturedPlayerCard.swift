@@ -64,6 +64,7 @@ struct FeaturedPlayerCard: View {
     }
 }
 
+#if DEBUG
 #Preview {
     FeaturedPlayerCard(
         player: GameFixtures.rickeaJackson(),
@@ -74,3 +75,4 @@ struct FeaturedPlayerCard: View {
     .environment(\.theme, Theme.wehoop)
     .environment(\.teamThemeProvider, TeamThemeProvider())
 }
+#endif

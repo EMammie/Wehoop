@@ -137,6 +137,7 @@ struct GameCardView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 #Preview("Finished Game") {
     GameCardView(game: GameFixtures.finishedGame())
         .padding()
@@ -178,3 +179,4 @@ struct GameCardView: View {
         .padding()
         .background(Color(.systemGroupedBackground))
 }
+#endif

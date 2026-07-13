@@ -92,6 +92,7 @@ struct PlayersView: View {
     }
 }
 
+#if DEBUG
 #Preview("Players View - Loaded") {
     let mockRepo = MockPlayerRepository(players: GameFixtures.allPlayers())
     let viewModel = PlayersViewModel(playerRepository: mockRepo)
@@ -146,3 +147,4 @@ class MockPlayerRepository: PlayerRepository {
         return player
     }
 }
+#endif
