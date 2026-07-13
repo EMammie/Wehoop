@@ -27,116 +27,43 @@ enum SportradarEndpoints {
         case teams = "teams"
         case players = "players"
         case games = "games"
-        case tournaments = "tournaments"
-        case series = "series"
     }
-    
-    /// Endpoint paths
-    enum Endpoint: String {
-        // Daily endpoints
-        case dailyChanges = "changes.json"
-        case dailyInjuries = "daily_injuries.json"
-        case dailySchedule , tournamentSchedule, seriesSchedule = "schedule.json"
-        case dailyTransfers = "transfers.json"
-        
-        // Game endpoints
-        case gameBoxscore = "boxscore.json"
-        case gameSummary, tournamentSummary = "summary.json"
-        case gamePlayByPlay = "pbp.json"
-        
-        // Team endpoints
-        case teams = "teams.json"
-        case teamProfile, playerProfile = "profile.json"
-        case teamRoster = "roster.json"
-        
-        // Player endpoints
-       // case playerProfile = "profile.json"
 
-        // League endpoints
-        case leagueHierarchy = "hierarchy.json"
-        case leagueLeaders = "leaders.json"
-        case standings = "standings.json"
-        case rankings = "rankings.json"
-        case seasonalStatistics, seriesStatistics = "statistics.json"
-        //case seriesStatistics = "statistics.json"
+    /// Endpoint file names, mapped via `endpointPath` because several
+    /// endpoints share the same file name (e.g. profile.json)
+    enum Endpoint {
+        case dailySchedule
+        case gameSummary
+        case teams
+        case teamProfile
+        case playerProfile
+        case teamRoster
+        case leagueHierarchy
+        case leagueLeaders
+        case standings
+        case injuries
 
-        // Season endpoints
-        case seasons = "seasons.json"
-        
-        // Tournament endpoints
-        case tournamentList = "list.json"
-//        case tournamentSchedule = "schedule.json"
-//        case tournamentSummary = "summary.json"
-        
-        // Series endpoints
-//        case seriesSchedule = "schedule.json"
-        
-        // Injury endpoints
-        case injuries = "injuries.json"
+        var endpointPath: String {
+            switch self {
+            case .dailySchedule:
+                return "schedule.json"
+            case .gameSummary:
+                return "summary.json"
+            case .teams:
+                return "teams.json"
+            case .teamProfile, .playerProfile:
+                return "profile.json"
+            case .teamRoster:
+                return "roster.json"
+            case .leagueHierarchy:
+                return "hierarchy.json"
+            case .leagueLeaders:
+                return "leaders.json"
+            case .standings:
+                return "standings.json"
+            case .injuries:
+                return "injuries.json"
+            }
+        }
     }
-  
-}
-
-extension SportradarEndpoints.Endpoint {
-  var endpointPath : String {
-    switch self {
-    case .dailyChanges:
-      return"changes.json"
-    case .dailyInjuries:
-      return "daily_injuries.json"
-    case .dailySchedule , .tournamentSchedule, .seriesSchedule:
-      return "schedule.json"
-    case .dailyTransfers:
-      return "transfers.json"
-
-    // Game endpoints
-    case .gameBoxscore:
-      return "boxscore.json"
-    case .gameSummary, .tournamentSummary:
-      return "summary.json"
-    case .gamePlayByPlay:
-      return "pbp.json"
-
-    // Team endpoints
-    case .teams:
-      return "teams.json"
-    case .teamProfile, .playerProfile:
-      return "profile.json"
-    case .teamRoster:
-      return "roster.json"
-
-    // Player endpoints
-   // case playerProfile = "profile.json"
-
-    // League endpoints
-    case .leagueHierarchy:
-      return "hierarchy.json"
-    case .leagueLeaders:
-      return "leaders.json"
-    case .standings:
-      return "standings.json"
-    case .rankings:
-      return "rankings.json"
-    case .seasonalStatistics, .seriesStatistics:
-      return "statistics.json"
-    //case seriesStatistics = "statistics.json"
-
-    // Season endpoints
-    case .seasons :
-      return "seasons.json"
-
-    // Tournament endpoints
-    case .tournamentList:
-      return "list.json"
-//        case tournamentSchedule = "schedule.json"
-//        case tournamentSummary = "summary.json"
-
-    // Series endpoints
-//        case seriesSchedule = "schedule.json"
-
-    // Injury endpoints
-    case .injuries :
-      return "injuries.json"
-    }
-  }
 }

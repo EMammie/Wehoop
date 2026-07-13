@@ -131,6 +131,7 @@ private struct TeamLogoView: View {
 }
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Mist BC") {
     TeamCardView(team: GameFixtures.mistBC())
         .padding()
@@ -172,4 +173,4 @@ private struct TeamLogoView: View {
     .environment(\.theme, Theme.wehoop)
     .environment(\.teamThemeProvider, TeamThemeProvider())
 }
-
+#endif

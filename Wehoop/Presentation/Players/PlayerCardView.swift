@@ -76,6 +76,7 @@ struct PlayerCardView: View {
     }
 }
 
+#if DEBUG
 #Preview("Player Card - With Stats") {
     PlayerCardView(player: GameFixtures.breannaStewart())
         .padding()
@@ -103,3 +104,4 @@ struct PlayerCardView: View {
         .background(Color(.systemGroupedBackground))
         .environment(\.theme, Theme.wehoop)
 }
+#endif

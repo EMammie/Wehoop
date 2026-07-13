@@ -49,8 +49,10 @@ struct LeagueLeadersSection: View {
     }
 }
 
+#if DEBUG
 #Preview {
     LeagueLeadersSection(players: GameFixtures.topPlayers())
         .environment(\.theme, Theme.wehoop)
         .environment(\.teamThemeProvider, TeamThemeProvider())
 }
+#endif

@@ -41,7 +41,6 @@ struct WehoopApp: App {
                 .environment(\.theme, Theme.wehoop)
                 .environment(\.teamThemeProvider, teamThemeProvider)
                 .environment(\.featureFlagService, container.resolve() as FeatureFlagService)
-                .environmentObject(AppCoordinator())
         }
     }
 }
