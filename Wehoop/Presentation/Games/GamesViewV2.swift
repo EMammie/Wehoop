@@ -7,6 +7,15 @@
 
 import SwiftUI
 
+/// State for the box score sheet presentation
+private enum BoxScoreSheetState {
+    case hidden
+    case loading(gameId: String)
+    case error(gameId: String, error: Error)
+    case noBoxScore(game: Game)
+    case loaded(game: Game, boxScore: BoxScore)
+}
+
 /// GamesView variant matching mockup design
 struct GamesViewV2: View {
     @StateObject private var viewModel: GamesViewModel
@@ -17,12 +26,8 @@ struct GamesViewV2: View {
     @State private var topPlayers: [Player] = []
     @State private var isLoadingLeaders = false
     
-    // For box score navigation
-    @State private var selectedGame: Game?
-    @State private var showBoxScore = false
-    @State private var isLoadingGameDetails = false
-    @State private var gameDetailError: Error?
-    @State private var hasAttemptedBoxScoreFetch = false
+    // Box score sheet driven by state enum
+    @State private var boxScoreSheetState: BoxScoreSheetState = .hidden
 
     init(viewModel: GamesViewModel? = nil) {
         if let viewModel = viewModel {
@@ -58,165 +63,127 @@ struct GamesViewV2: View {
                 }
                 await loadTopPlayers()
             }
-            .sheet(isPresented: $showBoxScore) {
-                if isLoadingGameDetails {
-                    NavigationView {
-                        LoadingView()
-                            .navigationTitle("Loading Game Details")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbar {
-                                ToolbarItem(placement: .navigationBarTrailing) {
-                                    Button("Cancel") {
-                                        showBoxScore = false
-                                        isLoadingGameDetails = false
-                                        selectedGame = nil
-                                        gameDetailError = nil
-                                        hasAttemptedBoxScoreFetch = false
-                                    }
-                                }
-                            }
-                    }
-                } else if let error = gameDetailError {
-                    NavigationView {
-                        ErrorView(error: error) {
-                            // Retry loading game details
-                            if let gameId = selectedGame?.id {
-                                Task {
-                                    await loadGameDetails(gameId: gameId)
-                                }
-                            }
-                        }
-                        .navigationTitle("Error")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Done") {
-                                    showBoxScore = false
-                                    selectedGame = nil
-                                    gameDetailError = nil
-                                    hasAttemptedBoxScoreFetch = false
-                                }
-                            }
-                        }
-                    }
-                } else if let game = selectedGame {
-                    if let boxScore = game.boxScore {
-                        BoxScoreView(game: game, boxScore: boxScore)
-                    } else {
-                        // Attempt to fetch box score data if we haven't already tried
-                        // Only attempt for finished or live games (scheduled games won't have box scores)
-                        if !hasAttemptedBoxScoreFetch && !isLoadingGameDetails && (game.isFinished || game.isLive) {
-                            // Trigger async fetch
-
-                            // Show loading while fetching
-                            NavigationView {
-                                LoadingView()
-                                    .navigationTitle("Loading Box Score")
-                                    .navigationBarTitleDisplayMode(.inline)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarTrailing) {
-                                            Button("Cancel") {
-                                                showBoxScore = false
-                                                isLoadingGameDetails = false
-                                                selectedGame = nil
-                                                gameDetailError = nil
-                                                hasAttemptedBoxScoreFetch = false
-                                            }
-                                        }
-                                    }
-                            }.task {
-                              await loadGameDetails(gameId: game.id)
-                            }
-                        } else {
-                            // Show "No Box Score Available" for scheduled games or after attempted fetch
-                            NavigationView {
-                                VStack(spacing: 20) {
-                                    Image(systemName: "sportscourt")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(.secondary)
-                                    
-                                    Text("No Box Score Available")
-                                        .font(.headline)
-                                    
-                                    Text(game.status == .scheduled 
-                                         ? "This game is scheduled and hasn't started yet."
-                                         : "Box score data is not available for this game.")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal)
-                                    
-                                    // Show game info even without box score
-                                    VStack(spacing: 12) {
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(game.awayTeam.abbreviation)
-                                                    .font(.headline)
-                                                Text(game.awayTeam.name)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            Spacer()
-                                        }
-                                        
-                                        Divider()
-                                        
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(game.homeTeam.abbreviation)
-                                                    .font(.headline)
-                                                Text(game.homeTeam.name)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            Spacer()
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color(.secondarySystemBackground))
-                                    .cornerRadius(12)
-                                    .padding(.horizontal)
-                                    
-                                    // Add retry button for finished/live games
-                                    if game.isFinished || game.isLive {
-                                        Button(action: {
-                                            // Reset state to trigger loading view
-                                            // Ensure we preserve the selected game for context
-                                            Task { @MainActor in
-                                                hasAttemptedBoxScoreFetch = false
-                                                gameDetailError = nil
-                                                isLoadingGameDetails = true
-                                                // Ensure selectedGame is set for context
-                                                if selectedGame == nil {
-                                                    selectedGame = game
-                                                }
-                                                await loadGameDetails(gameId: game.id)
-                                            }
-                                        }) {
-                                            Text("Retry Loading Box Score")
-                                                .font(.subheadline)
-                                                .foregroundColor(.blue)
-                                        }
-                                        .padding(.top)
-                                    }
-                                }
-                                .padding()
-                                .navigationTitle("Game Details")
-                                .navigationBarTitleDisplayMode(.inline)
-                                .toolbar {
-                                    ToolbarItem(placement: .navigationBarTrailing) {
-                                        Button("Done") {
-                                            showBoxScore = false
-                                            selectedGame = nil
-                                            hasAttemptedBoxScoreFetch = false
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            .sheet(isPresented: sheetBinding) {
+                boxScoreSheetContent
+            }
+        }
+    }
+    
+    private var sheetBinding: Binding<Bool> {
+        Binding(
+            get: { if case .hidden = boxScoreSheetState { return false } else { return true } },
+            set: { if !$0 { boxScoreSheetState = .hidden } }
+        )
+    }
+    
+    @ViewBuilder
+    private var boxScoreSheetContent: some View {
+        switch boxScoreSheetState {
+        case .hidden:
+            EmptyView()
+        case .loading:
+            NavigationView {
+                LoadingView()
+                    .navigationTitle("Loading Game Details")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { toolbarCancel }
+            }
+        case .error(_, let error):
+            NavigationView {
+                ErrorView(error: error) {
+                    if case .error(let gameId, _) = boxScoreSheetState {
+                        Task { await loadGameDetails(gameId: gameId) }
                     }
                 }
+                .navigationTitle("Error")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { toolbarDone }
             }
+        case .noBoxScore(let game):
+            noBoxScoreSheetView(game: game)
+        case .loaded(let game, let boxScore):
+            BoxScoreView(game: game, boxScore: boxScore)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarCancel: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button("Cancel") { boxScoreSheetState = .hidden }
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarDone: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button("Done") { boxScoreSheetState = .hidden }
+        }
+    }
+    
+    private func noBoxScoreSheetView(game: Game) -> some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Image(systemName: "sportscourt")
+                    .font(.system(size: 60))
+                    .foregroundColor(.secondary)
+                
+                Text("No Box Score Available")
+                    .font(.headline)
+                
+                Text(game.status == .scheduled
+                     ? "This game is scheduled and hasn't started yet."
+                     : "Box score data is not available for this game.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(game.awayTeam.abbreviation)
+                                .font(.headline)
+                            Text(game.awayTeam.name)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                    Divider()
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(game.homeTeam.abbreviation)
+                                .font(.headline)
+                            Text(game.homeTeam.name)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                }
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                
+                if game.isFinished || game.isLive {
+                    Button(action: {
+                        Task { @MainActor in
+                            boxScoreSheetState = .loading(gameId: game.id)
+                            await loadGameDetails(gameId: game.id)
+                        }
+                    }) {
+                        Text("Retry Loading Box Score")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top)
+                }
+            }
+            .padding()
+            .navigationTitle("Game Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { toolbarDone }
         }
     }
     
@@ -338,35 +305,20 @@ struct GamesViewV2: View {
     }
     
     private func loadGameDetails(gameId: String) async {
-        isLoadingGameDetails = true
-        gameDetailError = nil
-        showBoxScore = true
-        hasAttemptedBoxScoreFetch = false
-        
-        defer {
-            isLoadingGameDetails = false
-        }
+        boxScoreSheetState = .loading(gameId: gameId)
         
         do {
             let fullGame = try await viewModel.getGame(id: gameId)
             await MainActor.run {
-                // Force view update by clearing first, then setting new value
-                selectedGame = nil
-                selectedGame = fullGame
-                gameDetailError = nil
-                hasAttemptedBoxScoreFetch = true
+                if let boxScore = fullGame.boxScore {
+                    boxScoreSheetState = .loaded(game: fullGame, boxScore: boxScore)
+                } else {
+                    boxScoreSheetState = .noBoxScore(game: fullGame)
+                }
             }
         } catch {
             await MainActor.run {
-                gameDetailError = error
-                hasAttemptedBoxScoreFetch = true
-                // Keep the original game if available for context
-                if selectedGame == nil {
-                    // Try to find the game in the current list
-                    if case .loaded(let games, let liveGames) = viewModel.state {
-                        selectedGame = (games + liveGames).first { $0.id == gameId }
-                    }
-                }
+                boxScoreSheetState = .error(gameId: gameId, error: error)
             }
         }
     }
