@@ -84,6 +84,8 @@ nonisolated public enum WehoopColor {
     public static let accent = ColorPair(BrandPalette.peach)
     public static let highlight = ColorPair(BrandPalette.lime)
     public static let onAccent = ColorPair(BrandPalette.ink)
+    /// Selected controls and tab items.
+    public static let tint = ColorPair(light: BrandPalette.ink, dark: BrandPalette.lime)
 
     // Game status
     public static let statusLive = ColorPair(light: RGB(0xAC4B22), dark: BrandPalette.peach)
@@ -136,6 +138,7 @@ public extension ShapeStyle where Self == Color {
     static var wehoopAccent: Color { Color(WehoopColor.accent) }
     static var wehoopHighlight: Color { Color(WehoopColor.highlight) }
     static var wehoopOnAccent: Color { Color(WehoopColor.onAccent) }
+    static var wehoopTint: Color { Color(WehoopColor.tint) }
     static var wehoopLive: Color { Color(WehoopColor.statusLive) }
     static var wehoopFinal: Color { Color(WehoopColor.statusFinal) }
     static var wehoopDelayed: Color { Color(WehoopColor.statusDelayed) }

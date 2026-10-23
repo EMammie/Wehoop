@@ -15,6 +15,7 @@ struct ColorTokenTests {
     nonisolated static let textTokens: [(String, ColorPair)] = [
         ("textPrimary", WehoopColor.textPrimary),
         ("textSecondary", WehoopColor.textSecondary),
+        ("tint", WehoopColor.tint),
         ("statusLive", WehoopColor.statusLive),
         ("statusFinal", WehoopColor.statusFinal),
         ("statusDelayed", WehoopColor.statusDelayed),
