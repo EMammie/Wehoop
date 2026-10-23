@@ -4,7 +4,7 @@
 // by scripts/check-deps.sh in CI. Change them there and in the plan, not only here.
 import PackageDescription
 
-/// Domain, Contracts, LiveEngine, Data and TestSupport stay nonisolated (no setting).
+/// Domain, Contracts, LiveEngine, WehoopData and TestSupport stay nonisolated (no setting).
 /// Swift 6 language mode (complete strict concurrency) is set package-wide below.
 /// UI modules (DesignSystem, Feature*) default every declaration to the main actor.
 let mainActorDefault: [SwiftSetting] = [.defaultIsolation(MainActor.self)]
@@ -19,8 +19,8 @@ var targets: [Target] = [
     .target(name: "Domain"),
     .target(name: "Contracts"),
     .target(name: "LiveEngine", dependencies: ["Domain", "Contracts"]),
-    // supabase-swift (exact pin) joins Data in S3.
-    .target(name: "Data", dependencies: ["Domain", "Contracts", "LiveEngine"]),
+    // supabase-swift (exact pin) joins WehoopData in S3.
+    .target(name: "WehoopData", dependencies: ["Domain", "Contracts", "LiveEngine"]),
     .target(
         name: "DesignSystem",
         resources: [.copy("Resources/Fonts")],
@@ -31,18 +31,18 @@ var targets: [Target] = [
     .testTarget(name: "DomainTests", dependencies: ["Domain"]),
     .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
     .testTarget(name: "LiveEngineTests", dependencies: ["LiveEngine", "TestSupport"]),
-    .testTarget(name: "DataTests", dependencies: ["Data", "TestSupport"]),
+    .testTarget(name: "WehoopDataTests", dependencies: ["WehoopData", "TestSupport"]),
     .testTarget(name: "DesignSystemTests", dependencies: ["DesignSystem"], swiftSettings: mainActorDefault),
     .testTarget(name: "TestSupportTests", dependencies: ["TestSupport"]),
 ]
 
 for feature in features {
-    // Feature* -> Domain, DesignSystem only. Never Data, never another Feature.
+    // Feature* -> Domain, DesignSystem only. Never WehoopData, never another Feature.
     targets.append(.target(name: feature, dependencies: ["Domain", "DesignSystem"], swiftSettings: mainActorDefault))
     targets.append(.testTarget(name: "\(feature)Tests", dependencies: [.target(name: feature)], swiftSettings: mainActorDefault))
 }
 
-let libraries = ["Domain", "Contracts", "LiveEngine", "Data", "DesignSystem", "TestSupport"] + features
+let libraries = ["Domain", "Contracts", "LiveEngine", "WehoopData", "DesignSystem", "TestSupport"] + features
 
 let package = Package(
     name: "WehoopKit",

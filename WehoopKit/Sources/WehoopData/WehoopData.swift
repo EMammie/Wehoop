@@ -1,4 +1,4 @@
-/// Data: `APIClient` (Hono `/v1/...`, typed endpoints, one decoder, retry with backoff,
+/// WehoopData: `APIClient` (Hono `/v1/...`, typed endpoints, one decoder, retry with backoff,
 /// host-scoped base URL), `PostgRESTReader` and `RealtimeTransport` over supabase-swift
 /// (exact pin, added in S3), `AuthSession` (anonymous sign-in), the `Cache` actor,
 /// `FavoritesStore` with the legacy-favorites migration, and the repository

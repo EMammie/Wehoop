@@ -22,11 +22,11 @@ targets:
     sources:
       - path: App
     dependencies:
-      # App -> every Feature*, Data, DesignSystem, Domain (docs/M5-PLAN.md)
+      # App -> every Feature*, WehoopData, DesignSystem, Domain (docs/M5-PLAN.md)
       - package: WehoopKit
         product: Domain
       - package: WehoopKit
-        product: Data
+        product: WehoopData
       - package: WehoopKit
         product: DesignSystem
       - package: WehoopKit

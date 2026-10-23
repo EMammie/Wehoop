@@ -1,5 +1,5 @@
 import Testing
-@testable import Data
+@testable import WehoopData
 
 struct BackendEnvironmentTests {
     @Test("Only the local dev stack and the hosted backend are known environments")

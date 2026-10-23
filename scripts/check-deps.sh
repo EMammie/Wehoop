@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Enforces the module dependency rules of docs/M5-PLAN.md on WehoopKit.
 #
-#   Feature* -> Domain, DesignSystem          (never Data, never another Feature)
-#   Data -> Domain, Contracts, LiveEngine (+ external packages, e.g. supabase-swift)
+#   Feature* -> Domain, DesignSystem          (never WehoopData, never another Feature)
+#   WehoopData -> Domain, Contracts, LiveEngine (+ external packages, e.g. supabase-swift)
 #   LiveEngine -> Domain, Contracts
 #   TestSupport -> Domain, Contracts, LiveEngine
 #   Domain, Contracts, DesignSystem -> nothing in the package
-#   Feature test targets: never Data, never another Feature.
+#   Feature test targets: never WehoopData, never another Feature.
 #
 # Checks both the declared target dependencies (`swift package dump-package`) and the
 # `import` lines in each target's sources, because SwiftPM can let an undeclared
@@ -32,7 +32,7 @@ allowed = {
     "Contracts": set(),
     "DesignSystem": set(),
     "LiveEngine": {"Domain", "Contracts"},
-    "Data": {"Domain", "Contracts", "LiveEngine"},
+    "WehoopData": {"Domain", "Contracts", "LiveEngine"},
     "TestSupport": {"Domain", "Contracts", "LiveEngine"},
 }
 for feature in features:
@@ -44,8 +44,8 @@ def local_deps(target):
         for kind in ("byName", "target"):
             if kind in dep and dep[kind][0] in local:
                 deps.add(dep[kind][0])
-        # "product" deps are external packages; only Data may have them.
-        if "product" in dep and target["name"] != "Data" and target["type"] != "test":
+        # "product" deps are external packages; only WehoopData may have them.
+        if "product" in dep and target["name"] != "WehoopData" and target["type"] != "test":
             deps.add(f"external:{dep['product'][0]}")
     return deps
 
@@ -67,8 +67,8 @@ for name, target in sorted(targets.items()):
         if name.startswith("Feature"):
             own = name.removesuffix("Tests")
             for dep in sorted((declared | used) - {own}):
-                if dep == "Data" or dep in features:
-                    violations.append(f"{name} depends on {dep} (Feature tests: never Data, never another Feature)")
+                if dep == "WehoopData" or dep in features:
+                    violations.append(f"{name} depends on {dep} (Feature tests: never WehoopData, never another Feature)")
         continue
     if name not in allowed:
         violations.append(f"{name} has no dependency rule; add it to scripts/check-deps.sh and docs/M5-PLAN.md")

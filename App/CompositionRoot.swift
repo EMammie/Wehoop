@@ -2,7 +2,7 @@ import Foundation
 
 /// Builds the app's dependency graph and hands each feature its `Dependencies`.
 ///
-/// S0 stub: it only decides the data mode and the tab order. S3 wires the Data
+/// S0 stub: it only decides the data mode and the tab order. S3 wires the WehoopData
 /// implementations (live) or TestSupport's `ReplaySource` (fixtures) behind Domain's
 /// protocols. The app never holds a provider key; it talks only to wehoop-api.
 struct CompositionRoot {
