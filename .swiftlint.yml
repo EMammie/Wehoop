@@ -1,0 +1,30 @@
+# Minimal SwiftLint config for the M5 rebuild. Legacy/ is reference only.
+included:
+  - App
+  - AppTests
+  - AppUITests
+  - WehoopKit/Sources
+  - WehoopKit/Tests
+  - WehoopKit/Package.swift
+excluded:
+  - Legacy
+  - .build
+  - WehoopKit/.build
+  - DerivedData
+  - build
+
+disabled_rules:
+  - todo
+  - identifier_name   # short tokens like Spacing.s / .xs are intentional
+  - trailing_comma    # Swift 6 allows trailing commas; they keep diffs small
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - modifier_order
+  - redundant_nil_coalescing
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
