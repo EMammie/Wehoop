@@ -2,23 +2,22 @@
 
 > Your ultimate destination for WNBA, Unrivaled, and NCAA women's basketball games, stats, and player insights.
 
-[![iOS](https://img.shields.io/badge/iOS-17.0+-blue.svg)](https://developer.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org/)
-[![Xcode](https://img.shields.io/badge/Xcode-15.0+-blue.svg)](https://developer.apple.com/xcode/)
+[![iOS](https://img.shields.io/badge/iOS-26.2+-blue.svg)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-6-orange.svg)](https://swift.org/)
+[![Xcode](https://img.shields.io/badge/Xcode-26.2+-blue.svg)](https://developer.apple.com/xcode/)
 
 ## 📱 About Wehoop
 
-Wehoop is a modern iOS application designed to provide comprehensive coverage of women's basketball. The app delivers real-time game updates, detailed statistics, player profiles, and team information for WNBA, Unrivaled, and NCAA leagues.
+Wehoop is a modern iOS application designed to provide comprehensive coverage of women's basketball. The app covers live games, detailed statistics, player profiles, and team information for WNBA, Unrivaled, and NCAA leagues.
 
 ### Key Features
 
-- **🏀 Live Games Feed**: Real-time game updates with live scores, box scores, and game statistics
+- **🏀 Live Games Feed**: Live scores, box scores, and game statistics
 - **📊 League Leaders**: View top performers across multiple statistical categories (scoring, rebounding, assists, etc.)
 - **👤 Player Profiles**: Detailed player information including statistics, team affiliation, and career highlights
 - **🏆 Team Pages**: Comprehensive team rosters, statistics, and team-specific information
 - **⭐ Favorites**: Save and track your favorite players for quick access
 - **🎨 Beautiful UI**: Modern, polished interface with smooth animations and transitions
-- **🔄 Real-time Updates**: Live game updates with WebSocket support for instant score changes
 
 ## 🎬 App Demo
 
@@ -30,115 +29,25 @@ A quick walkthrough of the app's onboarding experience and key features:
 
 ## 🏗️ Architecture
 
-Wehoop is built following **Clean Architecture** principles, ensuring maintainability, testability, and scalability. The architecture is organized into distinct layers with clear separation of concerns.
+> **Rebuild in progress (M5).** The app is being rebuilt as a modular Swift 6 app on the
+> wehoop-api backend instead of calling a stats provider from the
+> phone. The approved plan, module layout and dependency rules are in
+> [docs/M5-PLAN.md](docs/M5-PLAN.md). The previous app lives in `Legacy/` as a reference
+> until it is deleted before beta.
 
-### Architecture Principles
-
-#### 1. **Separation of Concerns**
-Each layer has a single, well-defined responsibility:
-- **Presentation**: UI and user interaction
-- **Domain**: Business logic and rules
-- **Data**: Data fetching and persistence
-- **Core**: Shared utilities and infrastructure
-
-#### 2. **Dependency Inversion**
-High-level modules (Domain) don't depend on low-level modules (Data). Both depend on abstractions (protocols), enabling easy testing and swapping of implementations.
-
-#### 3. **Single Source of Truth**
-Each piece of data has one authoritative source, reducing inconsistencies and making state management predictable.
-
-#### 4. **Testability**
-The architecture enables comprehensive testing at each layer:
-- **Unit Tests**: Use cases, ViewModels, repositories
-- **Integration Tests**: Repository implementations with data sources
-- **UI Tests**: SwiftUI view behavior
-
-### Architecture Layers
-
-```
-┌─────────────────────────────────────────────────────────┐
-│              Presentation Layer (SwiftUI)                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-│  │  Views   │  │ViewModels │  │Components│  │  Theme  │ │
-│  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────┐
-│                Domain Layer (Business Logic)               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │  Models  │  │ UseCases │  │Protocols │              │
-│  └──────────┘  └──────────┘  └──────────┘              │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────┐
-│                 Data Layer (Implementation)               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │Repositories│ │DataSources│ │   DTOs  │              │
-│  └──────────┘  └──────────┘  └──────────┘              │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────┐
-│              Core Layer (Infrastructure)                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-│  │Networking│  │  Storage │  │  Cache   │  │Utilities│ │
-│  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
-
-#### **Presentation Layer**
-- **Views**: SwiftUI views for each feature (Games, Players, Teams, Leaders, Favorites)
-- **ViewModels**: Observable objects that manage view state and business logic coordination
-- **Components**: Reusable UI components (cards, pickers, feeds, etc.)
-- **Theme System**: Centralized theming with support for team-specific colors
-
-#### **Domain Layer**
-- **Models**: Core business entities (Game, Player, Team, BoxScore, etc.)
-- **Use Cases**: Encapsulated business logic operations (GetGamesUseCase, GetPlayerProfileUseCase, etc.)
-- **Repository Protocols**: Abstract interfaces defining data operations
-
-#### **Data Layer**
-- **Repository Implementations**: Concrete implementations of repository protocols
-- **Data Sources**: Remote (API) and local (persistence) data sources
-- **DTOs**: Data Transfer Objects for API responses and local storage
-
-#### **Core Layer**
-- **Networking**: URLSession-based network service with WebSocket support
-- **Storage**: UserDefaults and file-based storage services
-- **Cache**: In-memory caching with expiration and staleness checks
-- **Utilities**: Feature flags, logging, and helper extensions
-
-### Dependency Injection
-
-The app uses a protocol-based dependency injection container (`DependencyContainer`) that:
-- Registers all services and repositories at app startup
-- Resolves dependencies automatically
-- Enables easy mocking for testing
-- Provides a `ViewModelFactory` for creating ViewModels with proper dependencies
-
-### Data Flow
-
-```
-User Action → View → ViewModel → UseCase → Repository → DataSource → API/Storage
-                                                                    ↓
-User Sees Update ← View ← ViewModel ← UseCase ← Repository ← DataSource
-```
-
-1. **User interacts** with a SwiftUI view
-2. **ViewModel** receives the action and coordinates with a **UseCase**
-3. **UseCase** executes business logic and calls a **Repository**
-4. **Repository** fetches data from **RemoteDataSource** or **LocalDataSource**
-5. **Data flows back** through the layers, transformed from DTOs to Domain models
-6. **ViewModel** updates its `@Published` properties
-7. **View** automatically updates via SwiftUI's reactive system
+- `App/`: app target (entry point, composition root, root tabs), generated by XcodeGen from `project.yml`.
+- `WehoopKit/`: local Swift package with `Domain`, `Contracts`, `LiveEngine`, `Data`,
+  `DesignSystem`, `TestSupport` and one `Feature*` module per screen.
+- Feature modules depend only on `Domain` and `DesignSystem`; `scripts/check-deps.sh` enforces it in CI.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Xcode**: 15.0 or later
-- **iOS**: 17.0 or later
-- **Swift**: 5.9 or later
-- **macOS**: 14.0 or later (for development)
+- **Xcode**: 26.2 or later
+- **iOS**: 26.2 or later
+- **Swift**: 6.2 tools (Swift 6 language mode)
+- **XcodeGen** and **SwiftLint**: `brew install xcodegen swiftlint`
 
 ### Installation
 
@@ -148,8 +57,9 @@ User Sees Update ← View ← ViewModel ← UseCase ← Repository ← DataSourc
    cd wehoop
    ```
 
-2. **Open the project:**
+2. **Generate and open the project** (`Wehoop.xcodeproj` is generated, not committed):
    ```bash
+   xcodegen generate
    open Wehoop.xcodeproj
    ```
 
@@ -168,6 +78,8 @@ The onboarding flow is feature-gated and can be toggled via the debug menu (shak
 
 ## 📁 Project Structure
 
+The tree below describes the legacy app, now under `Legacy/`. For the new layout see [docs/M5-PLAN.md](docs/M5-PLAN.md).
+
 ```
 Wehoop/
 ├── App/                          # App entry point and dependency injection
@@ -177,7 +89,7 @@ Wehoop/
 │   └── AppCoordinator.swift     # App-level coordination
 │
 ├── Core/                         # Core services and utilities
-│   ├── Networking/              # Network service and WebSocket support
+│   ├── Networking/              # Network service
 │   ├── Storage/                 # Storage service implementations
 │   ├── Cache/                   # Caching service with expiration
 │   ├── Theming/                 # Theme system and team colors
@@ -225,7 +137,7 @@ Wehoop/
 
 ### Games Feed
 - Browse games by date with intuitive date picker
-- View live games with real-time score updates
+- View live games with live score updates
 - Access detailed box scores for finished games
 - See game schedules and upcoming matchups
 - Organized display: Live games, Upcoming games, Finished games
@@ -266,9 +178,10 @@ This project includes comprehensive test coverage:
 ### Running Tests
 
 ```bash
-# In Xcode: Press ⌘U
-# Or from command line:
-xcodebuild test -scheme Wehoop -destination 'platform=iOS Simulator,name=iPhone 15'
+swift test --package-path WehoopKit        # every package module, on macOS, no simulator
+xcodegen generate
+xcodebuild test -scheme Wehoop -destination 'platform=iOS Simulator,name=iPhone 17'
+scripts/check-deps.sh && swiftlint lint --strict
 ```
 
 See [TESTING.md](TESTING.md) for detailed testing guidelines.
@@ -277,13 +190,9 @@ See [TESTING.md](TESTING.md) for detailed testing guidelines.
 
 ### API Configuration
 
-The app uses Sportradar API for game data. Configure your API key:
-
-1. Copy `Config.example.xcconfig` to `Config.xcconfig`
-2. Add your API key to `Config.xcconfig`
-3. Link the config file in Xcode project settings
-
-See [API_CONFIGURATION_SETUP.md](API_CONFIGURATION_SETUP.md) for detailed instructions.
+The rebuilt app ships **no provider API key** and needs no configuration file: it reads
+data only from the wehoop-api backend. The `Config.xcconfig` setup applies to the legacy
+app in `Legacy/` only.
 
 ### Feature Flags
 
