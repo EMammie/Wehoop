@@ -15,6 +15,8 @@ Backend plan: `~/Projects/wehoop-api/docs/PLAN.md` §7 M5 (rev 4.10 records this
 4. The pre-rebuild work in progress was committed as-is on `perf/cached-date-formatters`
    (`ebfef26`) and is not merged.
 
+6. **Career, growth and overseas leagues (2026-10-25):** not required for the first version, but the design must not block them. A player's career across our three leagues ships in S6 as the season table; growth views (per-season trends, game log) and overseas leagues (a fourth provider product) are queued for M6 below. The rule for M5: nothing in a feature module may hard-code the set of leagues.
+
 ## Why not refactor the existing app
 
 Three read-only surveys (2026-10-22) found the following:
@@ -117,12 +119,22 @@ TestSupport ──► Domain, Contracts, LiveEngine
 | Scores (date strip, live / upcoming / final per league) | GamesViewV2 (shows at most 3 games, layout bug) | `v_schedule` by league and date window. Live scores come from the `league:{code}:scores` channel (backend M4, unmerged); until it merges, `v_schedule` is re-read every 30 s while any game is live. |
 | Game: header, clock, line score, play-by-play, team and player box score, Elam target | box score sheet only | `GameSync` (snapshot + `/changes` + `game:{id}` + pulse). Closed games: the snapshot only. Coverage `extendedBoxscore` shows score, status and period, and says so. |
 | Leaders (category picker, top players) | LeadersViewV2 | `v_player_seasons` ordered by the category average, filtered by league and season. Needs index support (backend B2). |
-| Players (search, profile, favorite) | PlayersView, PlayerProfileViewV2 | Search: `players` fts through PostgREST. Profile: `/v1/players/:id` + `v_player_seasons` (career across leagues). |
+| Players (search, profile, favorite) | PlayersView, PlayerProfileViewV2 | Search: `players` fts through PostgREST. Profile: `/v1/players/:id` + `v_player_seasons` (career across leagues, one timeline ordered by season, grouped by league). Game log: `v_boxscore` filtered by `player_id`. Trend charts over the same rows are M6. |
 | Teams (list, page: record, roster, leaders, schedule) | TeamsView, TeamPageViewV2 (fake data) | `teams`, `v_standings`, `player_team_seasons` roster, `v_player_seasons` filtered by team, `v_schedule` by team. |
 | Standings | none (guessed from win%) | `v_standings` by league, season and conference. |
 | Favorites | FavoritesView | `FavoritesStore` + players, live games of favorite players' teams. |
 | Onboarding | IntroPage, carousel, title reveal | port: replace the 100 Hz timer with `TimelineView`, fix the always-true `\|\|`, remove global symbols, credit or rewrite the tutorial-derived code. |
 | Settings | version hardcoded, debug flags | version from the bundle, data attribution (Sportradar), acknowledgements, debug-only fixture toggle. V1/V2 flags are gone. |
+
+### Built for later: career, growth, overseas
+
+These are not M5 features, but M5 lays the data shapes they will stand on, so they are decided now:
+
+- **`League` is data, not a switch.** `Domain.League` is a value (`code`, `name`, `shortName`, colors) loaded from the `leagues` table, not a three-case enum that every feature switches on. A feature receives a `[League]` and never names one. Adding a league is then a backend migration and a `Domain` fixture, with no feature change. The one place that may switch on a code is `DesignSystem` for brand colors, with a default for unknown codes.
+- **Career is one timeline.** `PlayerCareer` in `Domain` is an ordered list of `SeasonLine` (league, season year and type, team, games, totals, averages) from `v_player_seasons`, already across leagues. The profile in S6 renders it as a table grouped by league. M6 renders the same value as per-stat trend charts (Swift Charts) and a "then vs now" comparison, with no new data.
+- **Game log is derived.** `v_boxscore` has one row per `(game, provider_player_id)` with `player_id`; filtered by player and ordered by `scheduled_at` it is the game log. S6 may show the last 10 as a list; the full log with filters is M6.
+- **History depth is a backend question.** Season lines reach only as far back as the reference refresh (B3) ingests them; charts are shallow in year one unless past seasons are backfilled on purpose. `FeaturePlayers` must look right with one season and with ten.
+- **Overseas lines will carry a different id system.** Sportradar's international competitions live in the Global Basketball API (`sr:player:` ids, mapping feeds to link them to WNBA and NCAAWB ids). `SeasonLine` therefore carries `league.code` plus an optional `competition` name and country, so a EuroLeague Women or WNBL line fits the same row type when M6 adds the source.
 
 ## Backend work M5 needs (wehoop-api, dev stack only)
 
@@ -160,12 +172,25 @@ S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and
 - iPad-specific layouts (it runs, unoptimized).
 - Localization beyond English. Strings go through `String(localized:)` from day one.
 - Provisional profiles (decided at the S8 checkpoint).
+- Growth charts, "then vs now" comparisons and the full game log (M6; S6 ships the season table and the last 10 games).
+- Overseas leagues and players' lines abroad (M6; a fourth provider product, see below).
+
+## Queued for M6 (not required for the first version)
+
+| Item | What it needs | Notes |
+|---|---|---|
+| Overseas leagues (EuroLeague Women, Turkey, Spain, France, Australia WNBL, China WCBA) | Backend: a Global Basketball API trial key (separate product and quota), an adapter over its `sr_id` system, the mapping feeds to link `sr:player:` ids to the WNBA and NCAAWB ids `identity.ts` already holds, and either new `league_code` values or a `competitions` table behind `seasons`. App: nothing beyond new `League` rows, if the rule above holds. | Sportradar publishes no list of which women's competitions the product covers; the trial confirms it. Lower-tier coverage: season lines and box scores, not play-by-play. Queued for backend plan rev 4.11 after G5. |
+| Growth over time | `FeaturePlayers`: per-stat trend charts over `PlayerCareer`, a season-vs-season comparison, the full game log with filters. Backend: a decision on backfilling past seasons through B3. | No new data shapes. |
+| Live Activities and widgets | A second `GameSync` consumer in an extension target. | Already listed above. |
+| Push notifications | Backend sender + APNs; favorites drive the subscriptions. | |
+
 
 ## Risks
 
 | Risk | Mitigation |
 |---|---|
 | Parity scope creep | Each slice ends at its acceptance row; anything new goes to an M6 list. |
+| Features hard-code the three leagues, so overseas lines later force a rewrite | `Domain.League` is data from the `leagues` table; features take `[League]` and never name one; `check-deps.sh` gains a grep that fails on a league literal (`"wnba"`, `.wnba`) inside `Feature*`. |
 | `league:*:scores` not merged yet (M4) | `v_schedule` polling every 30 s while games are live; switching later is a WehoopData-only change. |
 | No production keys before beta | TestFlight testers watch simulation replays on the hosted worker; real data starts when keys exist. |
 | Realtime private-channel behavior on cloud (a public channel still joined on 2026-10-21) | Recheck the dashboard toggle before S3; S3 evidence includes the reject test on cloud. |
