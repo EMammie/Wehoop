@@ -183,6 +183,7 @@ S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and
 | Growth over time | `FeaturePlayers`: per-stat trend charts over `PlayerCareer`, a season-vs-season comparison, the full game log with filters. Backend: a decision on backfilling past seasons through B3. | No new data shapes. |
 | Live Activities and widgets | A second `GameSync` consumer in an extension target. | Already listed above. |
 | Push notifications | Backend sender + APNs; favorites drive the subscriptions. | |
+| Shared token source | A `tokens/base.json` owned by one repo, a generator that emits `BrandPalette` and the `:root` CSS variables, and a `--check` step in both CIs. | Trigger: the first brand change that has to be made by hand in two places. Until then the `ColorTokenTests` palette test is the drift guard (see Risks). |
 
 
 ## Risks
@@ -190,6 +191,7 @@ S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and
 | Risk | Mitigation |
 |---|---|
 | Parity scope creep | Each slice ends at its acceptance row; anything new goes to an M6 list. |
+| Token drift between the site and the app (found 2026-10-26: `surface` and `statusLive` were copied from raw hex values in CSS rules, and the site's live dot was a third red, `#bd5c3d`) | Primitives live only as `:root` variables in `wehoop-landing/app/globals.css` and as `BrandPalette`; the site now names `--cream` and `--rust`, and its live dot and focus ring use `--rust`; `ColorTokenTests` asserts every primitive and that shared semantic tokens resolve to a primitive. A generator is queued for M6. |
 | Features hard-code the three leagues, so overseas lines later force a rewrite | `Domain.League` is data from the `leagues` table; features take `[League]` and never name one; `check-deps.sh` gains a grep that fails on a league literal (`"wnba"`, `.wnba`) inside `Feature*`. |
 | `league:*:scores` not merged yet (M4) | `v_schedule` polling every 30 s while games are live; switching later is a WehoopData-only change. |
 | No production keys before beta | TestFlight testers watch simulation replays on the hosted worker; real data starts when keys exist. |

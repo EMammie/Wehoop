@@ -10,6 +10,14 @@ struct ColorTokenTests {
         #expect(BrandPalette.peach.hex == 0xF7B497)
         #expect(BrandPalette.lime.hex == 0xD9ED79)
         #expect(BrandPalette.muted.hex == 0x685E70)
+        #expect(BrandPalette.cream.hex == 0xFFFDF7)
+        #expect(BrandPalette.rust.hex == 0xAC4B22)
+    }
+
+    @Test("Semantic tokens shared with the site resolve to a named primitive, never a copied hex")
+    func sharedSemanticTokensUsePrimitives() {
+        #expect(WehoopColor.surface.light == BrandPalette.cream)
+        #expect(WehoopColor.statusLive.light == BrandPalette.rust)
     }
 
     nonisolated static let textTokens: [(String, ColorPair)] = [

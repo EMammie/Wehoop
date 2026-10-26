@@ -57,20 +57,29 @@ nonisolated public struct ColorPair: Sendable, Hashable {
     }
 }
 
-/// The brand palette, exactly as `wehoop-landing/app/globals.css` defines it.
+/// Primitive tokens: the brand palette, exactly as the `:root` variables in
+/// `wehoop-landing/app/globals.css` define it. One source, two surfaces.
+///
+/// Rule: a value used by both the site and the app must exist as a CSS variable
+/// first, and `ColorTokenTests` asserts every entry here against it. Views never
+/// use these directly; they use the semantic `WehoopColor` tokens below.
+/// (Token drift found 2026-10-26: `surface` and `statusLive` had been copied from
+/// raw hex values in CSS rules, and the site's live dot used a third red.)
 nonisolated public enum BrandPalette {
     public static let ink = RGB(0x29183B)
     public static let paper = RGB(0xFFF8ED)
     public static let peach = RGB(0xF7B497)
     public static let lime = RGB(0xD9ED79)
     public static let muted = RGB(0x685E70)
+    public static let cream = RGB(0xFFFDF7)
+    public static let rust = RGB(0xAC4B22)
 }
 
 /// Semantic color tokens. Views use these, never raw hex.
 nonisolated public enum WehoopColor {
     // Surfaces
     public static let background = ColorPair(light: BrandPalette.paper, dark: RGB(0x1A1024))
-    public static let surface = ColorPair(light: RGB(0xFFFDF7), dark: BrandPalette.ink)
+    public static let surface = ColorPair(light: BrandPalette.cream, dark: BrandPalette.ink)
     public static let separator = ColorPair(
         light: RGB(0x29183B, opacity: 0.15),
         dark: RGB(0xFFF8ED, opacity: 0.15)
@@ -88,7 +97,7 @@ nonisolated public enum WehoopColor {
     public static let tint = ColorPair(light: BrandPalette.ink, dark: BrandPalette.lime)
 
     // Game status
-    public static let statusLive = ColorPair(light: RGB(0xAC4B22), dark: BrandPalette.peach)
+    public static let statusLive = ColorPair(light: BrandPalette.rust, dark: BrandPalette.peach)
     public static let statusFinal = ColorPair(light: BrandPalette.muted, dark: RGB(0xC3B8CB))
     public static let statusDelayed = ColorPair(light: RGB(0x7A5200), dark: RGB(0xE8B450))
 }
