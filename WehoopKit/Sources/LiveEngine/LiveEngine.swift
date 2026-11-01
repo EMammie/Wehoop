@@ -4,7 +4,8 @@
 /// `/changes`, re-snapshot when history expired, catch up on reconnect), and `ClockModel`.
 /// Transport, API and clock are injected protocols. No networking, no UI.
 ///
-/// S0 placeholder: the reducer and sync land in S2.
+/// Files: `LiveGameState.swift` (reducer, durable `GameState`, `ClockObservation`),
+/// `GameSync.swift` (actor and the injected protocols), `ClockModel.swift`.
 import Contracts
 import Domain
 

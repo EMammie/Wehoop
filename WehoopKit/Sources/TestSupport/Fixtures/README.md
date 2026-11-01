@@ -1,6 +1,6 @@
 # Golden fixtures
 
-Captured by wehoop-api `pnpm golden` from a dev stack seeded with `pnpm seed:dev` (backend 5ab49f7, 2026-11-01T15:51:55.761Z).
+Captured by wehoop-api `pnpm golden` from a dev stack seeded with `pnpm seed:dev` (backend c7cf0a0, 2026-11-01T16:18:21.339Z).
 API bodies are the bytes the Hono API serves; view rows are the bytes the local PostgREST returns to the anon role.
 Every file was parsed with its contract schema before it was written. `manifest.json` lists each file with its contract type.
 Ids differ per `db reset`: recapture the whole set (`scripts/sync-goldens.sh` in the app), never edit a file by hand.
