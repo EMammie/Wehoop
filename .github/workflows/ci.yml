@@ -39,6 +39,26 @@ jobs:
 
       - name: Module dependency rules
         run: scripts/check-deps.sh
+      - name: Backend commit the Contracts were generated from
+        id: contracts
+        run: echo "sha=$(grep -v '^#' scripts/contracts-source | tail -n 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Generated Contracts are in sync with wehoop-api
+        uses: actions/checkout@v4
+        with:
+          repository: EMammie/wehoop-api
+          ref: ${{ steps.contracts.outputs.sha }}
+          path: .wehoop-api
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: .wehoop-api/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          cd .wehoop-api && pnpm install --frozen-lockfile
+          pnpm -s gen:swift --check --out "$GITHUB_WORKSPACE/WehoopKit/Sources/Contracts/Generated"
+
 
       - name: Package tests (macOS, no simulator)
         run: swift test --package-path WehoopKit

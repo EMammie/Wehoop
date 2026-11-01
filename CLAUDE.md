@@ -18,6 +18,7 @@ xcodebuild build -scheme Wehoop -destination 'platform=iOS Simulator,name=iPhone
 xcodebuild test  -scheme Wehoop -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' -only-testing:AppTests CODE_SIGNING_ALLOWED=NO
 scripts/check-deps.sh                        # module dependency rules
 swiftlint lint --strict                      # Legacy/ is excluded
+scripts/sync-contracts.sh [~/Projects/wehoop-api]   # regenerate WehoopKit/Sources/Contracts/Generated from the backend (records the commit in scripts/contracts-source); --check verifies
 ```
 CI (`.github/workflows/ci.yml`, macos-26) runs lint, check-deps, `swift test`, xcodegen and the app build.
 

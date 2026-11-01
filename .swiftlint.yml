@@ -8,6 +8,7 @@ included:
   - WehoopKit/Package.swift
 excluded:
   - Legacy
+  - WehoopKit/Sources/Contracts/Generated   # emitted by wehoop-api gen:swift; style rules do not apply to generated code
   - .build
   - WehoopKit/.build
   - DerivedData
