@@ -159,4 +159,40 @@ struct GeneratedDecodeTests {
         #expect(ChangeType.known.count == 7)
         #expect(PeriodType.unknown("shootout").rawValue == "shootout")
     }
+
+    @Test("A v_leaders row decodes its typed value and rank; an unknown category stays decodable (B2)")
+    func leadersRow() throws {
+        let json = """
+        {"league":"unrivaled","season_id":"44444444-4444-4444-8444-444444444444","season_year":2026,"season_type":"REG",\
+        "category":"points","value":32.75,"rank":1,"player_id":"55555555-5555-4555-8555-555555555555",\
+        "full_name":"Chelsea Gray","team_id":"66666666-6666-4666-8666-666666666666","provider_team_id":"t1",\
+        "team_name":"Rose BC","team_market":null,"team_alias":"ROS","games_played":4}
+        """
+        let row = try decode(LeadersRow.self, json)
+        #expect(row.category == .points)
+        #expect(row.rank == 1 && row.value == 32.75 && row.gamesPlayed == 4)
+        #expect(row.seasonType == .reg && row.teamMarket == nil)
+        #expect(try roundTrips(row))
+        let later = try decode(LeadersRow.self, json.replacingOccurrences(of: "\"points\"", with: "\"dunks\""))
+        #expect(later.category == .unknown("dunks"))
+        #expect(LeaderCategory.known.count == 10)
+        #expect(LeaderCategory.known.contains(.threePct) && LeaderCategory.known.contains(.fgPct))
+    }
+
+    @Test("A leagues row carries the switch label and colours, and decodes without colours (B2)")
+    func leagueRow() throws {
+        let json = """
+        {"code":"wnba","name":"WNBA","provider_alias":"wnba","created_at":"2026-10-01T00:00:00+00:00",\
+        "updated_at":"2026-11-01T00:00:00+00:00","short_name":"WNBA","colors":{"primary":"#FF6A13","secondary":"#1D1D1B"}}
+        """
+        let row = try decode(LeagueRow.self, json)
+        #expect(row.code == .wnba && row.shortName == "WNBA")
+        #expect(row.colors?["primary"] == .string("#FF6A13"))
+        #expect(try roundTrips(row))
+        let fourth = try decode(LeagueRow.self, """
+        {"code":"elw","name":"EuroLeague Women","provider_alias":"elw","created_at":"2026-10-01T00:00:00+00:00",\
+        "updated_at":"2026-11-01T00:00:00+00:00","short_name":"ELW","colors":null}
+        """)
+        #expect(fourth.code == .unknown("elw") && fourth.colors == nil)
+    }
 }
