@@ -1,0 +1,3 @@
+# The wehoop-api commit WehoopKit/Sources/TestSupport/Fixtures was captured from (scripts/sync-goldens.sh).
+# Capture needs that checkout's dev stack seeded with pnpm seed:dev; CI only decodes the committed files.
+5ab49f705365ef2ee398884368a6d291ba33ae2d

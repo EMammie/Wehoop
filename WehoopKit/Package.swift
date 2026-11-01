@@ -26,7 +26,11 @@ var targets: [Target] = [
         resources: [.copy("Resources/Fonts")],
         swiftSettings: mainActorDefault
     ),
-    .target(name: "TestSupport", dependencies: ["Domain", "Contracts", "LiveEngine"]),
+    .target(
+        name: "TestSupport",
+        dependencies: ["Domain", "Contracts", "LiveEngine"],
+        resources: [.copy("Fixtures")]   // golden JSON captured by wehoop-api `pnpm golden` (scripts/sync-goldens.sh)
+    ),
 
     .testTarget(name: "DomainTests", dependencies: ["Domain"]),
     .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),

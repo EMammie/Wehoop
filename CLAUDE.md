@@ -19,6 +19,7 @@ xcodebuild test  -scheme Wehoop -destination 'platform=iOS Simulator,name=iPhone
 scripts/check-deps.sh                        # module dependency rules
 swiftlint lint --strict                      # Legacy/ is excluded
 scripts/sync-contracts.sh [~/Projects/wehoop-api]   # regenerate WehoopKit/Sources/Contracts/Generated from the backend (records the commit in scripts/contracts-source); --check verifies
+scripts/sync-goldens.sh [~/Projects/wehoop-api]     # recapture WehoopKit/Sources/TestSupport/Fixtures (golden JSON, S1) from the backend's seeded dev stack (pnpm seed:dev there); records the commit in scripts/goldens-source
 ```
 CI (`.github/workflows/ci.yml`, macos-26) runs lint, check-deps, `swift test`, xcodegen and the app build.
 
@@ -49,7 +50,7 @@ The data module is `WehoopData` (not `Data`, which would clash with `Foundation.
 - Test behavior: reducer folds, sequencing, state transitions, decoding, contrast, routing.
   Never write not-nil or "view builds" tests.
 - Engine modules must stay runnable under `swift test` on macOS (no UIKit in them).
-- Fixtures come from the backend's committed replay fixtures via TestSupport; no live network in unit tests.
+- Fixtures come from the backend via TestSupport: `Golden` vends the JSON wehoop-api `pnpm golden` captured from its seeded dev stack (`Fixtures/manifest.json`; never hand-written, never edited); no live network in unit tests.
 
 ## Security non-negotiables
 - The app ships **no provider key** (no Sportradar key, no API_KEY build setting, no xcconfig secrets).

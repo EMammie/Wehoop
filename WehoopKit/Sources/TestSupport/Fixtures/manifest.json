@@ -1,0 +1,369 @@
+{
+  "generator": "pnpm golden",
+  "backendCommit": "5ab49f705365ef2ee398884368a6d291ba33ae2d",
+  "capturedAt": "2026-11-01T15:51:55.761Z",
+  "games": [
+    {
+      "league": "wnba",
+      "providerGameId": "40bea3f6-68c0-4f3b-96fa-336dfb7a9034",
+      "stem": "sim-93ee7c68",
+      "note": "Las Vegas Aces at New York Liberty, 2026 Commissioner’s Cup final; full coverage, every change type, five deleted events"
+    },
+    {
+      "league": "ncaawb",
+      "providerGameId": "2e36b340-9277-4b99-af20-b7ff7e86640e",
+      "stem": "sim-d9b71fe0",
+      "note": "Northwestern at Michigan State, 2025 REG; full coverage"
+    },
+    {
+      "league": "ncaawb",
+      "providerGameId": "e5e5e5e5-9277-4b99-af20-b7ff7e86640e",
+      "stem": "sim-d9b71fe0-extended",
+      "note": "the same recording relabelled extended_boxscore: status and period changes only, stats at stats_final_at"
+    },
+    {
+      "league": "unrivaled",
+      "providerGameId": "838316ea-ab7b-4581-a1dd-74229d1970d5",
+      "stem": "docs-838316ea",
+      "note": "Lunar Owls at Mist, hand-assembled from docs samples; Elam period, target 84 (partly synthetic, fixtures/unrivaled/README.md)"
+    }
+  ],
+  "entries": [
+    {
+      "file": "leagues.json",
+      "type": "LeagueRow",
+      "array": true,
+      "league": null,
+      "game": null,
+      "source": "leagues?order=code.asc"
+    },
+    {
+      "file": "wnba/schedule.json",
+      "type": "ScheduleRow",
+      "array": true,
+      "league": "wnba",
+      "game": null,
+      "source": "v_schedule?league=eq.wnba&order=scheduled_at.asc,provider_game_id.asc"
+    },
+    {
+      "file": "wnba/standings.json",
+      "type": "StandingsRow",
+      "array": true,
+      "league": "wnba",
+      "game": null,
+      "source": "v_standings?league=eq.wnba&order=season_id.asc,rank.asc.nullslast,team_id.asc"
+    },
+    {
+      "file": "wnba/player-seasons.json",
+      "type": "PlayerSeasonRow",
+      "array": true,
+      "league": "wnba",
+      "game": null,
+      "source": "v_player_seasons?league=eq.wnba&order=season_id.asc,player_id.asc,team_id.asc"
+    },
+    {
+      "file": "wnba/leaders.json",
+      "type": "LeadersRow",
+      "array": true,
+      "league": "wnba",
+      "game": null,
+      "source": "v_leaders?league=eq.wnba&order=rank.asc,category.asc,player_id.asc&limit=50"
+    },
+    {
+      "file": "wnba/scoreboard.json",
+      "type": "Scoreboard",
+      "array": false,
+      "league": "wnba",
+      "game": null,
+      "source": "league:wnba:scores (DbScoreboardSource.changedSince(null))"
+    },
+    {
+      "file": "ncaawb/schedule.json",
+      "type": "ScheduleRow",
+      "array": true,
+      "league": "ncaawb",
+      "game": null,
+      "source": "v_schedule?league=eq.ncaawb&order=scheduled_at.asc,provider_game_id.asc"
+    },
+    {
+      "file": "ncaawb/standings.json",
+      "type": "StandingsRow",
+      "array": true,
+      "league": "ncaawb",
+      "game": null,
+      "source": "v_standings?league=eq.ncaawb&order=season_id.asc,rank.asc.nullslast,team_id.asc"
+    },
+    {
+      "file": "ncaawb/player-seasons.json",
+      "type": "PlayerSeasonRow",
+      "array": true,
+      "league": "ncaawb",
+      "game": null,
+      "source": "v_player_seasons?league=eq.ncaawb&order=season_id.asc,player_id.asc,team_id.asc"
+    },
+    {
+      "file": "ncaawb/leaders.json",
+      "type": "LeadersRow",
+      "array": true,
+      "league": "ncaawb",
+      "game": null,
+      "source": "v_leaders?league=eq.ncaawb&order=rank.asc,category.asc,player_id.asc&limit=50"
+    },
+    {
+      "file": "ncaawb/scoreboard.json",
+      "type": "Scoreboard",
+      "array": false,
+      "league": "ncaawb",
+      "game": null,
+      "source": "league:ncaawb:scores (DbScoreboardSource.changedSince(null))"
+    },
+    {
+      "file": "unrivaled/schedule.json",
+      "type": "ScheduleRow",
+      "array": true,
+      "league": "unrivaled",
+      "game": null,
+      "source": "v_schedule?league=eq.unrivaled&order=scheduled_at.asc,provider_game_id.asc"
+    },
+    {
+      "file": "unrivaled/standings.json",
+      "type": "StandingsRow",
+      "array": true,
+      "league": "unrivaled",
+      "game": null,
+      "source": "v_standings?league=eq.unrivaled&order=season_id.asc,rank.asc.nullslast,team_id.asc"
+    },
+    {
+      "file": "unrivaled/player-seasons.json",
+      "type": "PlayerSeasonRow",
+      "array": true,
+      "league": "unrivaled",
+      "game": null,
+      "source": "v_player_seasons?league=eq.unrivaled&order=season_id.asc,player_id.asc,team_id.asc"
+    },
+    {
+      "file": "unrivaled/leaders.json",
+      "type": "LeadersRow",
+      "array": true,
+      "league": "unrivaled",
+      "game": null,
+      "source": "v_leaders?league=eq.unrivaled&order=rank.asc,category.asc,player_id.asc&limit=50"
+    },
+    {
+      "file": "unrivaled/scoreboard.json",
+      "type": "Scoreboard",
+      "array": false,
+      "league": "unrivaled",
+      "game": null,
+      "source": "league:unrivaled:scores (DbScoreboardSource.changedSince(null))"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/snapshot.json",
+      "type": "Snapshot",
+      "array": false,
+      "source": "/v1/games/1089a3fe-a54b-4010-9954-def460b1f742/snapshot"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/changes-p1.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/1089a3fe-a54b-4010-9954-def460b1f742/changes?after=0&limit=500"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/changes-p2.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/1089a3fe-a54b-4010-9954-def460b1f742/changes?after=500&limit=500"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/changes-p3.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/1089a3fe-a54b-4010-9954-def460b1f742/changes?after=1000&limit=500"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/changes-tail.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/1089a3fe-a54b-4010-9954-def460b1f742/changes?after=1233&limit=500"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/pulse.json",
+      "type": "Pulse",
+      "array": false,
+      "source": "buildPulse(1089a3fe-a54b-4010-9954-def460b1f742)"
+    },
+    {
+      "league": "wnba",
+      "game": "sim-93ee7c68",
+      "file": "wnba/sim-93ee7c68/boxscore.json",
+      "type": "BoxscoreRow",
+      "array": true,
+      "source": "v_boxscore?game_id=eq.1089a3fe-a54b-4010-9954-def460b1f742&order=team_id.asc,provider_player_id.asc"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/snapshot.json",
+      "type": "Snapshot",
+      "array": false,
+      "source": "/v1/games/3e36fb9b-c684-4b30-931c-7540b1b5b409/snapshot"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/changes-p1.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/3e36fb9b-c684-4b30-931c-7540b1b5b409/changes?after=0&limit=500"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/changes-p2.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/3e36fb9b-c684-4b30-931c-7540b1b5b409/changes?after=500&limit=500"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/changes-tail.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/3e36fb9b-c684-4b30-931c-7540b1b5b409/changes?after=665&limit=500"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/pulse.json",
+      "type": "Pulse",
+      "array": false,
+      "source": "buildPulse(3e36fb9b-c684-4b30-931c-7540b1b5b409)"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0",
+      "file": "ncaawb/sim-d9b71fe0/boxscore.json",
+      "type": "BoxscoreRow",
+      "array": true,
+      "source": "v_boxscore?game_id=eq.3e36fb9b-c684-4b30-931c-7540b1b5b409&order=team_id.asc,provider_player_id.asc"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0-extended",
+      "file": "ncaawb/sim-d9b71fe0-extended/snapshot.json",
+      "type": "Snapshot",
+      "array": false,
+      "source": "/v1/games/268e82eb-cc97-451a-a4bf-45256e7dd3bc/snapshot"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0-extended",
+      "file": "ncaawb/sim-d9b71fe0-extended/changes-p1.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/268e82eb-cc97-451a-a4bf-45256e7dd3bc/changes?after=0&limit=500"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0-extended",
+      "file": "ncaawb/sim-d9b71fe0-extended/changes-tail.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/268e82eb-cc97-451a-a4bf-45256e7dd3bc/changes?after=102&limit=500"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0-extended",
+      "file": "ncaawb/sim-d9b71fe0-extended/pulse.json",
+      "type": "Pulse",
+      "array": false,
+      "source": "buildPulse(268e82eb-cc97-451a-a4bf-45256e7dd3bc)"
+    },
+    {
+      "league": "ncaawb",
+      "game": "sim-d9b71fe0-extended",
+      "file": "ncaawb/sim-d9b71fe0-extended/boxscore.json",
+      "type": "BoxscoreRow",
+      "array": true,
+      "source": "v_boxscore?game_id=eq.268e82eb-cc97-451a-a4bf-45256e7dd3bc&order=team_id.asc,provider_player_id.asc"
+    },
+    {
+      "league": "unrivaled",
+      "game": "docs-838316ea",
+      "file": "unrivaled/docs-838316ea/snapshot.json",
+      "type": "Snapshot",
+      "array": false,
+      "source": "/v1/games/a4abc205-c8cd-4c10-a087-e224be229224/snapshot"
+    },
+    {
+      "league": "unrivaled",
+      "game": "docs-838316ea",
+      "file": "unrivaled/docs-838316ea/changes-p1.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/a4abc205-c8cd-4c10-a087-e224be229224/changes?after=0&limit=500"
+    },
+    {
+      "league": "unrivaled",
+      "game": "docs-838316ea",
+      "file": "unrivaled/docs-838316ea/changes-tail.json",
+      "type": "ChangesPage",
+      "array": false,
+      "source": "/v1/games/a4abc205-c8cd-4c10-a087-e224be229224/changes?after=12&limit=500"
+    },
+    {
+      "league": "unrivaled",
+      "game": "docs-838316ea",
+      "file": "unrivaled/docs-838316ea/pulse.json",
+      "type": "Pulse",
+      "array": false,
+      "source": "buildPulse(a4abc205-c8cd-4c10-a087-e224be229224)"
+    },
+    {
+      "league": "unrivaled",
+      "game": "docs-838316ea",
+      "file": "unrivaled/docs-838316ea/boxscore.json",
+      "type": "BoxscoreRow",
+      "array": true,
+      "source": "v_boxscore?game_id=eq.a4abc205-c8cd-4c10-a087-e224be229224&order=team_id.asc,provider_player_id.asc"
+    },
+    {
+      "file": "players/boston.json",
+      "type": "PlayerResponse",
+      "array": false,
+      "league": "unrivaled",
+      "game": null,
+      "source": "/v1/players/unrivaled:54b8a881-27f7-4735-b499-0c3adf0286b0"
+    },
+    {
+      "file": "players/stuelke.json",
+      "type": "PlayerResponse",
+      "array": false,
+      "league": "ncaawb",
+      "game": null,
+      "source": "/v1/players/ncaawb:29d82b92-40a0-4116-bf6d-f807901fbb7e"
+    },
+    {
+      "file": "players/collier.json",
+      "type": "PlayerResponse",
+      "array": false,
+      "league": "unrivaled",
+      "game": null,
+      "source": "/v1/players/unrivaled:fd8d4b11-3d70-450a-b65c-016bec29cc9d"
+    }
+  ]
+}

@@ -1,3 +1,3 @@
 # The wehoop-api commit WehoopKit/Sources/Contracts/Generated was emitted from (scripts/sync-contracts.sh).
 # CI checks out this commit and runs: pnpm gen:swift --check --out WehoopKit/Sources/Contracts/Generated
-b0436c7f6320a0b4b2eed6b9a1e5670ead435369
+5ab49f705365ef2ee398884368a6d291ba33ae2d
