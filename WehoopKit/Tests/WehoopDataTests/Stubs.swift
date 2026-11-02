@@ -40,12 +40,16 @@ final class RecordingClock: SyncClock {
 
 /// A clock whose sleeps wait until `release()` (the registry's grace period).
 final class GateClock: SyncClock {
-    private let waiters = Mutex<[CheckedContinuation<Void, Never>]>([])
-    private let pending = Mutex(0)
+    private let waiters = Mutex<[UUID: CheckedContinuation<Void, Never>]>([:])
     func now() -> Date { Date(timeIntervalSince1970: 1_800_000_000) }
     func sleep(for duration: Duration) async throws {
-        await withCheckedContinuation { c in
-            waiters.withLock { $0.append(c) }
+        let id = UUID()
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { c in
+                waiters.withLock { $0[id] = c }
+            }
+        } onCancel: {
+            waiters.withLock { $0.removeValue(forKey: id) }?.resume()
         }
         try Task.checkCancellation()
     }
@@ -55,8 +59,8 @@ final class GateClock: SyncClock {
 
     /// Wakes every sleeper.
     func release() {
-        let all = waiters.withLock { w in defer { w = [] }; return w }
-        all.forEach { $0.resume() }
+        let all = waiters.withLock { w in defer { w = [:] }; return w }
+        all.values.forEach { $0.resume() }
     }
 }
 

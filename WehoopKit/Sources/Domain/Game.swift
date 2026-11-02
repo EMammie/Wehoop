@@ -33,6 +33,8 @@ public struct Game: Sendable, Hashable, Identifiable {
     public let score: Score
     public let period: GamePeriod?
     public let elamTargetScore: Int?
+    /// The clock as the schedule row last observed it; `asOf` is on the **server's** clock (a
+    /// list shows it frozen). Only `LiveGame.clock` is corrected onto this device's clock.
     public let clock: GameClock
     /// A title the schedule gives the game (a tournament round), if any.
     public let title: String?

@@ -19,7 +19,7 @@ struct DevStackIntegrationTests {
 
     private func services() throws -> (SupabaseServices, BackendConfiguration) {
         let config = try BackendConfiguration.from(environment: env)
-        #expect(config.supabaseURL.port != 55321, "never the trial stack")
+        try #require(config.supabaseURL.port != 55321 && config.apiBaseURL.port != 55321, "never the trial stack")
         return (SupabaseServices(configuration: config, sessionStorage: .memory), config)
     }
 
@@ -57,41 +57,55 @@ struct DevStackIntegrationTests {
         print("S3-EVIDENCE guest anonymous=\(await services.auth.isAnonymous)")
     }
 
-    @Test("A guest cannot publish on game:{id}: the REST send is refused and a second guest never receives it")
-    func publishRejected() async throws {
+    /// A guest's forged broadcasts on `game:{id}` (REST and socket), heard for by a second guest.
+    final class Forgery: Sendable {
+        let marker = "s3-forged-\(UUID().uuidString)"
+        let heard = Mutex<[String]>([])
+        let restError = Mutex<String?>(nil)
+        var forgedHeard: Int { heard.withLock { $0.filter { $0.contains(marker) }.count } }
+        var anyHeard: Int { heard.withLock { $0.count } }
+    }
+
+    /// Joins `game:{gameId}` as two fresh guests, listens with one and forges with the other.
+    private func forge(on gameId: String, listenFor seconds: Int) async throws -> Forgery {
         let (publisher, _) = try services()
         let (listener, _) = try services()
-        let gameId = UUID().uuidString.lowercased()
-        let marker = "s3-forged-\(UUID().uuidString)"
         try await listener.auth.ensureSignedIn()
         try await publisher.auth.ensureSignedIn()
-
-        let heard = Mutex<[String]>([])
+        let forgery = Forgery()
         let listening = listener.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = true }
         let token = listening.onBroadcast(event: "*") { message in
-            heard.withLock { $0.append(String(describing: message)) }
+            forgery.heard.withLock { $0.append(String(describing: message)) }
         }
         try await listening.subscribeWithError()
-
         let sending = publisher.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = true }
         try await sending.subscribeWithError()
-        var restRefused = false
         do {
-            try await sending.httpSend(event: "change", message: ["marker": marker])
+            try await sending.httpSend(event: "change", message: ["marker": forgery.marker])
         } catch {
-            restRefused = true
-            print("S3-EVIDENCE publish REST refused: \(error)")
+            forgery.restError.withLock { $0 = error.localizedDescription }
         }
         // The socket path too: a client broadcast on a private channel without an insert policy.
-        await sending.broadcast(event: "change", message: ["marker": .string(marker)])
-        try await Task.sleep(for: .seconds(3))
-        let received = heard.withLock { $0.filter { $0.contains(marker) } }
-        #expect(restRefused, "a guest REST broadcast must be refused")
-        #expect(received.isEmpty, "the second guest received a forged message")
-        print("S3-EVIDENCE publish restRefused=\(restRefused) forgedReceived=\(received.count)")
+        await sending.broadcast(event: "change", message: ["marker": .string(forgery.marker)])
+        try await Task.sleep(for: .seconds(seconds))
         _ = token
         await listener.client.realtimeV2.removeChannel(listening)
         await publisher.client.realtimeV2.removeChannel(sending)
+        return forgery
+    }
+
+    private func isAuthorizationRefusal(_ description: String?) -> Bool {
+        guard let text = description?.lowercased() else { return false }
+        return text.contains("unauthorized") || text.contains("forbidden")
+    }
+
+    @Test("A guest cannot publish on game:{id}: the REST send is refused as unauthorized and a second guest never receives it")
+    func publishRejected() async throws {
+        let forgery = try await forge(on: UUID().uuidString.lowercased(), listenFor: 3)
+        let refusal = forgery.restError.withLock { $0 }
+        #expect(isAuthorizationRefusal(refusal), "expected 401/403, got \(refusal ?? "success")")
+        #expect(forgery.forgedHeard == 0, "the second guest received a forged message")
+        print("S3-EVIDENCE publish restError=\(refusal ?? "none") forgedReceived=\(forgery.forgedHeard)")
     }
 
     @Test("A replayed game, two views through the registry: one subscription, broadcasts equal /changes, fold equals final")
@@ -114,7 +128,13 @@ struct DevStackIntegrationTests {
         async let viewA: [LiveGameUpdate] = collect(registry.updates(gameId: Game.ID(id)))
         try await Task.sleep(for: .seconds(2))
         async let viewB: [LiveGameUpdate] = collect(registry.updates(gameId: Game.ID(id)))
-        let (a, b) = try await (viewA, viewB)
+        // Forged sends on this game's channel while real changes flow: the listening guest
+        // hears the real broadcasts (positive control) and never the forged one.
+        async let forged = forge(on: id, listenFor: 15)
+        let (a, b, forgery) = try await (viewA, viewB, forged)
+        let refusal = forgery.restError.withLock { $0 }
+        #expect(forgery.anyHeard > 0, "positive control: the listening guest heard no real broadcast")
+        #expect(forgery.forgedHeard == 0 && isAuthorizationRefusal(refusal))
 
         let started = await registry.started
         #expect(started == 1 && made.withLock { $0.count } == 1, "two views, one subscription")
@@ -144,6 +164,8 @@ struct DevStackIntegrationTests {
             received=\(stats.received) \
             applied=\(stats.applied) duplicates=\(stats.duplicates) gaps=\(stats.gaps) reconnects=\(stats.reconnects) \
             reasons=\(stats.catchUpReasons) foldEqualsFinal=\(folded.game == expected.game)
+            S3-EVIDENCE forgery onReplayChannel heardReal=\(forgery.anyHeard) forgedHeard=\(forgery.forgedHeard) \
+            restError=\(refusal ?? "none")
             """)
     }
 

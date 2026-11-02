@@ -155,4 +155,48 @@ struct GameSyncRegistryTests {
         }
         #expect(subs.value == 2)
     }
+
+    @Test("A view that goes away before it is registered never leaves a game running or a token behind")
+    func endedBeforeFollow() async throws {
+        let gate = GateClock()
+        let (registry, id) = try registry(game: .wnba, open: 10, grace: gate)
+        for _ in 0..<50 {
+            _ = registry.updates(gameId: id) // dropped at once: its termination races its follow
+        }
+        #expect(await eventually { await registry.trackedTokens == 0 })
+        let started = await registry.started
+        // A follow that won the race started the game, and its grace timer is waiting.
+        if started > 0 { #expect(await eventually { gate.sleeping == 1 }) }
+        gate.release()
+        #expect(await eventually { await registry.activeGameIds.isEmpty })
+    }
+
+    @Test("catchUpAll pages /changes for followed games and skips ended ones")
+    func catchUpAll() async throws {
+        let gate = GateClock()
+        let servers = Mutex<[FakeGameServer]>([])
+        let fixed = fixed
+        let open = GameSyncRegistry(grace: .seconds(30), clock: gate) { id in
+            let server = Self.freshServerOrDie(.wnba)
+            servers.withLock { $0.append(server) }
+            return GameSync(
+                gameId: id, transport: OpenTransport(server: server, limit: 30), api: FakeGameAPI(server: server),
+                clock: FakeClock(now: fixed), closingSettle: .zero
+            )
+        }
+        let id = Game.ID(try Golden.snapshot(.wnba).game.id)
+        let consumer = Task { for try await _ in open.updates(gameId: id) {} }
+        #expect(await eventually { await open.started == 1 })
+        let server = try #require(servers.withLock { $0.first })
+        #expect(await eventually { await server.delivered >= 30 })
+        let before = await server.changesCalls.count
+        let failures = await open.catchUpAll()
+        #expect(failures.isEmpty)
+        #expect(await server.changesCalls.count == before + 1)
+        consumer.cancel()
+
+        let (closed, closedId) = try registry(game: .unrivaledElam, open: nil, grace: GateClock())
+        for try await _ in closed.updates(gameId: closedId) {}
+        #expect(await closed.catchUpAll().isEmpty) // ended: nothing to page, nothing failed
+    }
 }

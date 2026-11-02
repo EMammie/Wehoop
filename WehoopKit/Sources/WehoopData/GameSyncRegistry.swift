@@ -56,15 +56,27 @@ public actor GameSyncRegistry: LiveGameSource {
         return stream
     }
 
-    /// Foreground or a network change: every followed game pages `/changes`.
-    public func catchUpAll() async {
-        for entry in entries.values where entry.ended == nil {
-            try? await entry.sync.catchUp()
+    /// Foreground or a network change: every followed game that has not ended pages `/changes`.
+    /// Returns the games whose catch-up failed, with the error (they stay stale until the next
+    /// gap, pulse or reconnect catches them up).
+    @discardableResult
+    public func catchUpAll() async -> [String: String] {
+        var failures: [String: String] = [:]
+        for (gameId, entry) in entries where entry.ended == nil {
+            do {
+                try await entry.sync.catchUp()
+            } catch {
+                failures[gameId] = String(describing: error)
+            }
         }
+        return failures
     }
 
     /// Games currently owned (followed, or inside their grace period).
     public var activeGameIds: [String] { entries.keys.sorted() }
+
+    /// Follower tokens still tracked (tests: drains to 0 once every stream has ended).
+    var trackedTokens: Int { followed.count + endedEarly.count }
 
     // MARK: Followers
 
@@ -118,8 +130,8 @@ public actor GameSyncRegistry: LiveGameSource {
         let sync = entry.sync
         entry.pump = Task {
             for await update in sync.updates {
-                let offset = await sync.serverOffset
-                let mapped = LiveGameUpdate(game: Mapping.liveGame(update.state, serverOffset: offset), cause: Mapping.cause(update.cause))
+                let game = Mapping.liveGame(update.state, serverOffset: update.serverOffset)
+                let mapped = LiveGameUpdate(game: game, cause: Mapping.cause(update.cause))
                 self.publish(mapped, to: entry)
             }
         }

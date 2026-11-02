@@ -66,4 +66,13 @@ struct FavoritesStoreTests {
         #expect(report == .init(migrated: 0, stillPending: 0))
         #expect(kv.data(forKey: FavoritesStore.legacyKey) == Data("not json".utf8))
     }
+
+    @Test("Favorites that no longer decode are moved aside, never overwritten by the next add")
+    func undecodableFavorites() async {
+        let kv = MemoryStore([FavoritesStore.favoritesKey: Data("{broken".utf8)])
+        let store = FavoritesStore(store: kv)
+        await store.add(PlayerSummary.ID("p1"))
+        #expect(await store.favorites() == [PlayerSummary.ID("p1")])
+        #expect(kv.data(forKey: FavoritesStore.asideKey(FavoritesStore.favoritesKey)) == Data("{broken".utf8))
+    }
 }

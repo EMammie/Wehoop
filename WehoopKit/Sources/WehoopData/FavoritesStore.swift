@@ -77,9 +77,17 @@ public actor FavoritesStore: FavoritesRepository {
         return MigrationReport(migrated: migrated, stillPending: still.count)
     }
 
+    /// Where a value that no longer decodes is kept, so a later write cannot destroy it.
+    static func asideKey(_ key: String) -> String { key + ".undecodable" }
+
     private func read(_ key: String) -> [String] {
         guard let data = store.data(forKey: key) else { return [] }
-        return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        if let ids = try? JSONDecoder().decode([String].self, from: data) { return ids }
+        if key != Self.legacyKey {
+            store.set(data, forKey: Self.asideKey(key))
+            store.set(nil, forKey: key)
+        }
+        return []
     }
 
     private func write(_ ids: [String], _ key: String) {

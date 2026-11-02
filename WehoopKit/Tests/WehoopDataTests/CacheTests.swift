@@ -74,4 +74,25 @@ struct CacheTests {
         let relaunched = try await Cache(directory: dir).value([String].self, key: "../schedule:wnba/2026", maxAge: 60) { throw Offline() }
         #expect(relaunched == ["a", "b"])
     }
+
+    @Test("Disk entries older than diskMaxAge are pruned on a later write; memory keeps at most maxEntries")
+    func pruning() async throws {
+        let dir = tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let now = Now()
+        let cache = Cache(directory: dir, maxEntries: 2, diskMaxAge: 7 * 24 * 3600, now: { now.value })
+        _ = try await cache.value(Int.self, key: "old", maxAge: 60) { 1 }
+        now.advance(8 * 24 * 3600)
+        _ = try await cache.value(Int.self, key: "new", maxAge: 60) { 2 }
+        let files = try FileManager.default.contentsOfDirectory(atPath: dir.path)
+        #expect(files == ["new.json"])
+        let memoryOnly = Cache(directory: nil, maxEntries: 2, now: { now.value })
+        let loads = Counter()
+        for key in ["a", "b", "c"] {
+            now.advance(1)
+            _ = try await memoryOnly.value(Int.self, key: key, maxAge: 3600) { loads.next() }
+        }
+        _ = try await memoryOnly.value(Int.self, key: "a", maxAge: 3600) { loads.next() }
+        #expect(loads.count == 4, "the oldest entry was evicted and reloaded")
+    }
 }

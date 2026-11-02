@@ -17,13 +17,24 @@ public actor Cache {
 
     private let directory: URL?
     private let now: @Sendable () -> Date
+    private let maxEntries: Int
+    private let diskMaxAge: TimeInterval
     private var memory: [String: Entry] = [:]
     private var inFlight: [String: Task<Data, any Error>] = [:]
+    private var lastPrune: Date?
 
-    /// - Parameter directory: where the disk tier lives (created on first write); nil keeps
-    ///   everything in memory.
-    public init(directory: URL?, now: @escaping @Sendable () -> Date = { Date() }) {
+    /// - Parameters:
+    ///   - directory: where the disk tier lives (created on first write); nil keeps
+    ///     everything in memory.
+    ///   - maxEntries: memory entries kept; the oldest go first.
+    ///   - diskMaxAge: disk entries older than this are deleted (checked at most hourly, on write).
+    public init(
+        directory: URL?, maxEntries: Int = 256, diskMaxAge: TimeInterval = 7 * 24 * 3600,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.directory = directory
+        self.maxEntries = max(1, maxEntries)
+        self.diskMaxAge = diskMaxAge
         self.now = now
     }
 
@@ -83,10 +94,28 @@ public actor Cache {
     private func store(_ data: Data, for key: String) {
         let storedAt = now()
         memory[key] = Entry(data: data, storedAt: storedAt)
+        if memory.count > maxEntries, let oldest = memory.min(by: { $0.value.storedAt < $1.value.storedAt })?.key {
+            memory[oldest] = nil
+        }
         guard let directory, let url = fileURL(for: key) else { return }
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try? data.write(to: url, options: .atomic)
         try? FileManager.default.setAttributes([.modificationDate: storedAt], ofItemAtPath: url.path)
+        pruneDisk(directory, at: storedAt)
+    }
+
+    /// Deletes disk entries older than `diskMaxAge` (schedule windows accumulate one file each).
+    private func pruneDisk(_ directory: URL, at date: Date) {
+        if let lastPrune, date.timeIntervalSince(lastPrune) < 3600 { return }
+        lastPrune = date
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: [.contentModificationDateKey]
+        )) ?? []
+        for file in files where file.pathExtension == "json" {
+            guard let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+                  date.timeIntervalSince(modified) > diskMaxAge else { continue }
+            try? FileManager.default.removeItem(at: file)
+        }
     }
 
     /// One file per key; the key is percent-encoded so it cannot leave the directory.

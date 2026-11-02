@@ -43,6 +43,8 @@ public struct SyncUpdate: Sendable {
 
     public let state: LiveGameState
     public let cause: Cause
+    /// Server time minus local time from the snapshot this state descends from, for `ClockModel`.
+    public let serverOffset: TimeInterval
 }
 
 /// Why `/changes` was paged.
@@ -294,7 +296,7 @@ public actor GameSync {
 
     private func emit(_ cause: SyncUpdate.Cause) {
         guard let state else { return }
-        continuation.yield(SyncUpdate(state: state, cause: cause))
+        continuation.yield(SyncUpdate(state: state, cause: cause, serverOffset: serverOffset))
     }
 
     // MARK: Closing
