@@ -13,6 +13,8 @@ import Testing
 /// Skipped unless `WEHOOP_INTEGRATION=1`; needs `WEHOOP_API_URL`, `WEHOOP_SUPABASE_URL`,
 /// `WEHOOP_SUPABASE_ANON_KEY`, and `WEHOOP_INTEGRATION_PROVIDER_GAME` (the replay's
 /// provider game id) for the replay test. Prints `S3-EVIDENCE` lines for the evidence file.
+/// `scripts/cloud-reject-test.sh` runs the guest tests against the hosted project, where
+/// `WEHOOP_EXPECT_PRIVATE_ONLY=1` also requires a public join of `game:{id}` to be refused.
 @Suite(.enabled(if: ProcessInfo.processInfo.environment["WEHOOP_INTEGRATION"] == "1"), .serialized)
 struct DevStackIntegrationTests {
     private let env = ProcessInfo.processInfo.environment
@@ -62,12 +64,18 @@ struct DevStackIntegrationTests {
         let marker = "s3-forged-\(UUID().uuidString)"
         let heard = Mutex<[String]>([])
         let restError = Mutex<String?>(nil)
+        /// Why the publisher's join was refused (only a public join is allowed to fail).
+        let joinError = Mutex<String?>(nil)
         var forgedHeard: Int { heard.withLock { $0.filter { $0.contains(marker) }.count } }
         var anyHeard: Int { heard.withLock { $0.count } }
     }
 
-    /// Joins `game:{gameId}` as two fresh guests, listens with one and forges with the other.
-    private func forge(on gameId: String, listenFor seconds: Int) async throws -> Forgery {
+    /// Joins `game:{gameId}` as two fresh guests, listens with one (always private) and forges
+    /// with the other, on a private channel or, with `publisherIsPrivate: false`, on the same
+    /// topic joined as a public channel.
+    private func forge(
+        on gameId: String, listenFor seconds: Int, publisherIsPrivate: Bool = true
+    ) async throws -> Forgery {
         let (publisher, _) = try services()
         let (listener, _) = try services()
         try await listener.auth.ensureSignedIn()
@@ -78,15 +86,25 @@ struct DevStackIntegrationTests {
             forgery.heard.withLock { $0.append(String(describing: message)) }
         }
         try await listening.subscribeWithError()
-        let sending = publisher.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = true }
-        try await sending.subscribeWithError()
+        let sending = publisher.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = publisherIsPrivate }
+        var joined = true
+        if publisherIsPrivate {
+            try await sending.subscribeWithError()
+        } else {
+            do {
+                try await sending.subscribeWithError()
+            } catch {
+                joined = false
+                forgery.joinError.withLock { $0 = String(describing: error) }
+            }
+        }
         do {
             try await sending.httpSend(event: "change", message: ["marker": forgery.marker])
         } catch {
             forgery.restError.withLock { $0 = error.localizedDescription }
         }
-        // The socket path too: a client broadcast on a private channel without an insert policy.
-        await sending.broadcast(event: "change", message: ["marker": .string(forgery.marker)])
+        // The socket path too: a client broadcast on a channel without an insert policy.
+        if joined { await sending.broadcast(event: "change", message: ["marker": .string(forgery.marker)]) }
         try await Task.sleep(for: .seconds(seconds))
         _ = token
         await listener.client.realtimeV2.removeChannel(listening)
@@ -106,6 +124,25 @@ struct DevStackIntegrationTests {
         #expect(isAuthorizationRefusal(refusal), "expected 401/403, got \(refusal ?? "success")")
         #expect(forgery.forgedHeard == 0, "the second guest received a forged message")
         print("S3-EVIDENCE publish restError=\(refusal ?? "none") forgedReceived=\(forgery.forgedHeard)")
+    }
+
+    /// The hole a project's "public access" setting can leave: the topic joined as a public
+    /// channel, where no `realtime.messages` policy applies. Whatever the join and the REST send
+    /// return, the private subscriber must hear nothing; on a private-only project (the cloud
+    /// run) the public join itself must be refused.
+    @Test("A guest's public-channel forgery on game:{id} never reaches a private subscriber")
+    func publicJoinIsolated() async throws {
+        let forgery = try await forge(on: UUID().uuidString.lowercased(), listenFor: 3, publisherIsPrivate: false)
+        let joinError = forgery.joinError.withLock { $0 }
+        let restError = forgery.restError.withLock { $0 }
+        #expect(forgery.forgedHeard == 0, "a public-channel message reached the private subscriber")
+        if env["WEHOOP_EXPECT_PRIVATE_ONLY"] == "1" {
+            #expect(joinError != nil, "the project accepted a public join of game:{id}")
+        }
+        print("""
+            S3-EVIDENCE publicJoin joined=\(joinError == nil) joinError=\(joinError ?? "none") \
+            restError=\(restError ?? "none") forgedReceived=\(forgery.forgedHeard)
+            """)
     }
 
     @Test("A replayed game, two views through the registry: one subscription, broadcasts equal /changes, fold equals final")

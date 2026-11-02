@@ -113,3 +113,8 @@ Config.xcconfig
 .swiftpm/
 # Per-user Claude Code settings
 .claude/settings.local.json
+
+# M5 S3 cloud reject test: the owner fills the key; never committed or printed
+.env.cloud-test
+# Local run logs (redacted)
+.local-runs/
