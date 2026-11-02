@@ -200,6 +200,6 @@ S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and
 | Features hard-code the three leagues, so overseas lines later force a rewrite | `Domain.League` is data from the `leagues` table; features take `[League]` and never name one; `check-deps.sh` gains a grep that fails on a league literal (`"wnba"`, `.wnba`) inside `Feature*`. |
 | `league:*:scores` not merged yet (M4) | `v_schedule` polling every 30 s while games are live; switching later is a WehoopData-only change. |
 | No production keys before beta | TestFlight testers watch simulation replays on the hosted worker; real data starts when keys exist. |
-| Realtime private-channel behavior on cloud (a public channel still joined on 2026-10-21) | Recheck the dashboard toggle before S3; S3 evidence includes the reject test on cloud. |
+| Realtime private-channel behavior on cloud (a public channel still joined on 2026-10-21) | Recheck the dashboard toggle before S3; S3 evidence includes the reject test on cloud. **Closed 2026-11-02**: the cloud run refused public joins only after the setting was re-saved (dashboard showed it off before); guest publish refused, 0 forged heard (`devlog/evidence/M5.md` S3). |
 | supabase-swift Swift 6 strictness | Wrap it inside WehoopData behind our protocols; pin an exact version. |
 | No visual designs exist | Each feature slice starts with a quick mock in the Simulator for owner review before the build. |
