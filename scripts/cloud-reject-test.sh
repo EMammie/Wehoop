@@ -11,7 +11,7 @@
 # The file is parsed, never sourced, and the key is never printed: the log under
 # .local-runs/ has it (and anything JWT- or key-shaped) redacted. The cloud run also sets
 # WEHOOP_EXPECT_PRIVATE_ONLY=1, so a public join of game:{id} must be refused there.
-# Each run signs in 6 anonymous users (2 per test); they can be deleted in the dashboard.
+# Each run signs in 7 anonymous users (2, 2 and 3 for the public case); they can be deleted in the dashboard.
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 ROOT=$PWD

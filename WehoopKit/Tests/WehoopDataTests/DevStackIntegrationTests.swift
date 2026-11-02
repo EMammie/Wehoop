@@ -66,6 +66,11 @@ struct DevStackIntegrationTests {
         let restError = Mutex<String?>(nil)
         /// Why the publisher's join was refused (only a public join is allowed to fail).
         let joinError = Mutex<String?>(nil)
+        /// What a third guest on the public channel heard (public forgeries only): proves the
+        /// forged message was really sent when the private listener hears nothing.
+        let publicHeard = Mutex<[String]>([])
+        let publicListenerJoinError = Mutex<String?>(nil)
+        var forgedHeardOnPublic: Int { publicHeard.withLock { $0.filter { $0.contains(marker) }.count } }
         var forgedHeard: Int { heard.withLock { $0.filter { $0.contains(marker) }.count } }
         var anyHeard: Int { heard.withLock { $0.count } }
     }
@@ -86,6 +91,7 @@ struct DevStackIntegrationTests {
             forgery.heard.withLock { $0.append(String(describing: message)) }
         }
         try await listening.subscribeWithError()
+        let publicListener = publisherIsPrivate ? nil : try await listenPublicly(on: gameId, for: forgery)
         let sending = publisher.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = publisherIsPrivate }
         var joined = true
         if publisherIsPrivate {
@@ -109,7 +115,34 @@ struct DevStackIntegrationTests {
         _ = token
         await listener.client.realtimeV2.removeChannel(listening)
         await publisher.client.realtimeV2.removeChannel(sending)
+        if let publicListener { await publicListener.guest.client.realtimeV2.removeChannel(publicListener.channel) }
         return forgery
+    }
+
+    /// A third guest on the public channel; the token keeps its broadcast callback registered.
+    struct PublicListener {
+        let guest: SupabaseServices
+        let channel: RealtimeChannelV2
+        let token: RealtimeSubscription
+    }
+
+    /// A third guest on the public channel of `game:{gameId}`; nil when its join is refused.
+    private func listenPublicly(
+        on gameId: String, for forgery: Forgery
+    ) async throws -> PublicListener? {
+        let (guest, _) = try services()
+        try await guest.auth.ensureSignedIn()
+        let channel = guest.client.realtimeV2.channel("game:\(gameId)") { $0.isPrivate = false }
+        let token = channel.onBroadcast(event: "*") { message in
+            forgery.publicHeard.withLock { $0.append(String(describing: message)) }
+        }
+        do {
+            try await channel.subscribeWithError()
+            return PublicListener(guest: guest, channel: channel, token: token)
+        } catch {
+            forgery.publicListenerJoinError.withLock { $0 = String(describing: error) }
+            return nil
+        }
     }
 
     private func isAuthorizationRefusal(_ description: String?) -> Bool {
@@ -139,9 +172,11 @@ struct DevStackIntegrationTests {
         if env["WEHOOP_EXPECT_PRIVATE_ONLY"] == "1" {
             #expect(joinError != nil, "the project accepted a public join of game:{id}")
         }
+        let publicListenerError = forgery.publicListenerJoinError.withLock { $0 }
         print("""
             S3-EVIDENCE publicJoin joined=\(joinError == nil) joinError=\(joinError ?? "none") \
-            restError=\(restError ?? "none") forgedReceived=\(forgery.forgedHeard)
+            restError=\(restError ?? "none") forgedReceived=\(forgery.forgedHeard) \
+            publicListenerJoined=\(publicListenerError == nil) forgedHeardOnPublic=\(forgery.forgedHeardOnPublic)
             """)
     }
 
