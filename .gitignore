@@ -118,3 +118,5 @@ Config.xcconfig
 .env.cloud-test
 # Local run logs (redacted)
 .local-runs/
+# Per-service build settings with real values (Config/*.xcconfig include them)
+Config/*.local.xcconfig

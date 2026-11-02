@@ -9,6 +9,8 @@ public protocol LeagueRepository: Sendable {
 public protocol ScheduleRepository: Sendable {
     /// Games of `league` scheduled in `[from, to)`, ordered by scheduled time.
     func games(league: League.Code, from: Date, to: Date) async throws -> [Game]
+    /// One game's schedule row (teams, tip-off, coverage); nil when no such game exists.
+    func game(id: Game.ID) async throws -> Game?
 }
 
 /// Canonical players.

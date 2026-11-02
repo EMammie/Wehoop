@@ -1,0 +1,3 @@
+// Copy to WehoopAPI.local.xcconfig (git-ignored) to point the app elsewhere, e.g. a device
+// reaching `pnpm dev:api` on this Mac, or the hosted API for TestFlight (S8).
+WEHOOP_API_URL = http:/$()/192.168.1.20:3000

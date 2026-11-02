@@ -1,0 +1,4 @@
+// wehoop-api (`/v1/...`). Default: `pnpm dev:api` on this Mac, which the Simulator reaches
+// on 127.0.0.1. On a device, set this Mac's LAN address in WehoopAPI.local.xcconfig.
+WEHOOP_API_URL = http:/$()/127.0.0.1:3000
+#include? "WehoopAPI.local.xcconfig"

@@ -41,6 +41,8 @@ struct ClockModelTests {
         let m = model("1:00", running: true, offset: 5)
         #expect(m.display(at: asOfDate) == "55.0")
         #expect(m.display(at: asOfDate.addingTimeInterval(-5)) == "1:00")
+        #expect(ClockModel.format(59.95) == "1:00") // rounds up to 600 tenths: the minute display, never "60.0"
+        #expect(ClockModel.format(59.9) == "59.9")
     }
 
     @Test("Below a minute the clock shows tenths")

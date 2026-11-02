@@ -42,6 +42,30 @@ public struct BackendConfiguration: Sendable, CustomStringConvertible, CustomRef
         )
     }
 
+    /// The Info.plist keys the app's build fills from `Config/WehoopAPI.xcconfig` and
+    /// `Config/Supabase.xcconfig` (and their git-ignored `.local.xcconfig` overrides), each
+    /// with the build setting of the same name as the environment variable above.
+    public enum InfoKey {
+        public static let apiURL = "WehoopAPIURL"
+        public static let supabaseURL = "WehoopSupabaseURL"
+        public static let anonKey = "WehoopSupabaseAnonKey"
+    }
+
+    /// Reads the configuration from an Info.plist dictionary. An empty value, or a build
+    /// setting left unexpanded (`$(…)`), counts as missing.
+    public static func from(infoDictionary: [String: Any]) throws -> BackendConfiguration {
+        let keys = [
+            ("WEHOOP_API_URL", InfoKey.apiURL),
+            ("WEHOOP_SUPABASE_URL", InfoKey.supabaseURL),
+            ("WEHOOP_SUPABASE_ANON_KEY", InfoKey.anonKey),
+        ]
+        var environment: [String: String] = [:]
+        for (name, key) in keys {
+            if let value = infoDictionary[key] as? String, !value.contains("$(") { environment[name] = value }
+        }
+        return try from(environment: environment)
+    }
+
     public var description: String {
         "BackendConfiguration(api: \(apiBaseURL.absoluteString), supabase: \(supabaseURL.absoluteString), anonKey: <redacted>)"
     }

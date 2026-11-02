@@ -45,6 +45,8 @@ public struct ClockModel: Sendable, Hashable {
             return "\(whole / 60):" + String(format: "%02d", whole % 60)
         }
         let tenths = Int((seconds * 10 - 1e-9).rounded(.up))
+        // Just under a minute rounds up to 600 tenths: that is the minute display.
+        if tenths >= 600 { return "1:00" }
         return "\(max(0, tenths) / 10).\(max(0, tenths) % 10)"
     }
 

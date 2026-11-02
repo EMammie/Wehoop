@@ -1,0 +1,6 @@
+// Supabase (PostgREST, Realtime, Auth). Default: the local dev stack (`supabase start`).
+// The anon key has no committed value: put it in Supabase.local.xcconfig (git-ignored;
+// copy Supabase.local.xcconfig.example). Without it the app opens as "not configured".
+WEHOOP_SUPABASE_URL = http:/$()/127.0.0.1:54321
+WEHOOP_SUPABASE_ANON_KEY =
+#include? "Supabase.local.xcconfig"

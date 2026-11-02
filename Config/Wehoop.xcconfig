@@ -1,0 +1,7 @@
+// Build settings of the Wehoop app target (project.yml `configFiles`), one file per service.
+// Each service file holds committed defaults (the local dev stack, no secrets) and includes
+// an optional, git-ignored `<Service>.local.xcconfig` with the values for your machine or
+// for a release build. The values reach the app through Info.plist (Config/Info.plist).
+// A URL's `//` would start an xcconfig comment, hence `http:/$()/…`.
+#include "WehoopAPI.xcconfig"
+#include "Supabase.xcconfig"

@@ -5,6 +5,7 @@ import Foundation
 /// Rows the repositories read: PostgREST in the app, fixtures in tests.
 public protocol RowSource: Sendable {
     func schedule(league: String, from: Date, to: Date) async throws -> [ScheduleRow]
+    func scheduleRow(id: String) async throws -> ScheduleRow?
     func leagues() async throws -> [LeagueRow]
 }
 
@@ -56,6 +57,14 @@ public struct ScheduleRepositoryImpl: ScheduleRepository {
             try await rows.schedule(league: league.rawValue, from: from, to: to)
         }
         return fetched.compactMap(Mapping.game)
+    }
+
+    public func game(id: Game.ID) async throws -> Game? {
+        let rows = rows
+        let fetched = try await cache.value([ScheduleRow].self, key: "game:\(id.rawValue)", maxAge: maxAge, stale: .onFailure) {
+            try await rows.scheduleRow(id: id.rawValue).map { [$0] } ?? []
+        }
+        return fetched.first.flatMap(Mapping.game)
     }
 }
 

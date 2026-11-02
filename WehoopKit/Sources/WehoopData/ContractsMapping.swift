@@ -115,8 +115,129 @@ enum Mapping {
             period: g.period.map { GamePeriod(number: $0.number, kind: periodKind($0.type), sequence: $0.sequence) },
             elamTargetScore: g.elamTargetScore,
             clock: GameClock(remaining: model.base, running: model.running, asOf: model.asOf?.addingTimeInterval(-serverOffset)),
-            seq: state.lastSeq
+            seq: state.lastSeq,
+            detail: detail(g)
         )
+    }
+
+    // MARK: Game detail
+
+    static func detail(_ g: GameState) -> GameDetail {
+        // Stats bodies say which provider team is home; plays and player lines take their side from it.
+        let sides = Dictionary(g.teamStats.values.map { ($0.providerTeamId, $0.isHome ? TeamSide.home : .away) }) { first, _ in first }
+        let names = g.playerStats.mapValues(\.fullName)
+        return GameDetail(
+            periods: g.periods.map {
+                PeriodLine(
+                    period: GamePeriod(number: $0.number, kind: periodKind($0.type), sequence: $0.sequence),
+                    score: Domain.Score(home: $0.score.home, away: $0.score.away)
+                )
+            },
+            plays: g.events.map { play($0, sides: sides, names: names) },
+            teamLines: g.teamStats.values
+                .map { TeamBoxLine(side: $0.isHome ? .home : .away, stats: box($0.stats)) }
+                .sorted { $0.side == .away && $1.side == .home },
+            playerLines: g.playerStats.values
+                .map { player($0, side: sides[$0.providerTeamId]) }
+                .sorted(by: playerOrder)
+        )
+    }
+
+    static func play(_ event: GameState.Event, sides: [String: TeamSide], names: [String: String]) -> Play {
+        let body = event.body
+        return Play(
+            id: event.providerEventId,
+            period: GamePeriod(number: body.period.number, kind: periodKind(body.period.type), sequence: body.period.sequence),
+            clock: body.clock,
+            kind: playKind(body.type),
+            side: body.providerTeamId.flatMap { sides[$0] },
+            playerName: body.providerPlayerId.flatMap { names[$0] },
+            description: body.description,
+            score: Domain.Score(home: body.score.home, away: body.score.away)
+        )
+    }
+
+    // One case per generated event kind: the switch is a table, not branching logic.
+    // swiftlint:disable:next cyclomatic_complexity
+    static func playKind(_ kind: LiveEvent.Kind) -> Play.Kind {
+        switch kind {
+        case .tipOff: .tipOff
+        case .shot(let shot): .shot(made: shot.made, points: shot.points)
+        case .freeThrow(let freeThrow): .freeThrow(made: freeThrow.made)
+        case .rebound: .rebound
+        case .turnover: .turnover
+        case .foul: .foul
+        case .timeout: .timeout
+        case .lineupChange: .substitution
+        case .periodStart: .periodStart
+        case .periodEnd: .periodEnd
+        case .gameStatus: .gameStatus
+        case .elamTargetSet(let target): .elamTarget(target.target)
+        case .awardedPoint(let award): .awardedPoint(award.points)
+        case .review: .review
+        case .other, .unknown: .other
+        }
+    }
+
+    static func player(_ line: StatsPlayerBody, side: TeamSide?) -> PlayerBoxLine {
+        PlayerBoxLine(
+            id: line.providerPlayerId, side: side, name: line.fullName, jersey: line.jersey,
+            position: line.position, starter: line.starter ?? false, played: line.played,
+            notPlayingReason: line.notPlayingReason, stats: box(line.stats)
+        )
+    }
+
+    static func box(_ stats: TeamStats) -> BoxStats {
+        var box = BoxStats()
+        box.points = stats.points
+        box.fieldGoalsMade = stats.fgm
+        box.fieldGoalsAttempted = stats.fga
+        box.threesMade = stats.tpm
+        box.threesAttempted = stats.tpa
+        box.freeThrowsMade = stats.ftm
+        box.freeThrowsAttempted = stats.fta
+        box.offensiveRebounds = stats.offRebounds
+        box.defensiveRebounds = stats.defRebounds
+        box.rebounds = stats.rebounds
+        box.assists = stats.assists
+        box.steals = stats.steals
+        box.blocks = stats.blocks
+        box.turnovers = stats.turnovers
+        box.fouls = stats.personalFouls
+        return box
+    }
+
+    static func box(_ stats: PlayerStats) -> BoxStats {
+        var box = BoxStats()
+        box.minutes = stats.minutes
+        box.points = stats.points
+        box.fieldGoalsMade = stats.fgm
+        box.fieldGoalsAttempted = stats.fga
+        box.threesMade = stats.tpm
+        box.threesAttempted = stats.tpa
+        box.freeThrowsMade = stats.ftm
+        box.freeThrowsAttempted = stats.fta
+        box.offensiveRebounds = stats.offRebounds
+        box.defensiveRebounds = stats.defRebounds
+        box.rebounds = stats.rebounds
+        box.assists = stats.assists
+        box.steals = stats.steals
+        box.blocks = stats.blocks
+        box.turnovers = stats.turnovers
+        box.fouls = stats.personalFouls
+        box.plusMinus = stats.plusMinus
+        return box
+    }
+
+    /// Away before home, starters first, then by minutes played, then by name.
+    static func playerOrder(_ lhs: PlayerBoxLine, _ rhs: PlayerBoxLine) -> Bool {
+        let order: (PlayerBoxLine) -> Int = { $0.side == .away ? 0 : $0.side == .home ? 1 : 2 }
+        if order(lhs) != order(rhs) { return order(lhs) < order(rhs) }
+        if lhs.starter != rhs.starter { return lhs.starter }
+        let lhsMinutes = lhs.stats.minutes.flatMap(ClockModel.seconds) ?? 0
+        let rhsMinutes = rhs.stats.minutes.flatMap(ClockModel.seconds) ?? 0
+        if lhsMinutes != rhsMinutes { return lhsMinutes > rhsMinutes }
+        return (lhs.name, lhs.id) < (rhs.name, rhs.id)
     }
 
     static func cause(_ cause: SyncUpdate.Cause) -> LiveGameUpdate.Cause {

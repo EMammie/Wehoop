@@ -82,4 +82,14 @@ public struct GameClock: Sendable, Hashable {
         self.running = running
         self.asOf = asOf
     }
+
+    /// True when the display moves with time: the backend says the clock runs (never a guess).
+    public var isCounting: Bool { running == true && remaining != nil && asOf != nil }
+
+    /// Seconds left at device time `now`; frozen at `remaining` unless counting; nil without a clock.
+    public func remaining(at now: Date) -> Double? {
+        guard let remaining else { return nil }
+        guard isCounting, let asOf else { return remaining }
+        return max(0, remaining - max(0, now.timeIntervalSince(asOf)))
+    }
 }

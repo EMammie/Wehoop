@@ -33,18 +33,20 @@ enum AppTab: String, CaseIterable, Identifiable {
     }
 }
 
-/// Root navigation: one `NavigationStack` per tab. Typed paths arrive with each feature.
+/// Root navigation: one `NavigationStack` per tab, its path owned by `AppNavigation`.
 struct RootTabView: View {
-    let tabs: [AppTab]
-    @State private var selection: AppTab = .scores
+    let root: CompositionRoot
+    @Bindable var navigation: AppNavigation
+    var isOnline = true
 
     var body: some View {
-        TabView(selection: $selection) {
-            ForEach(tabs) { tab in
+        TabView(selection: Binding(get: { navigation.selectedTab }, set: { navigation.select($0) })) {
+            ForEach(root.tabs) { tab in
                 Tab(value: tab) {
-                    NavigationStack {
+                    NavigationStack(path: Binding(get: { navigation.path(for: tab) }, set: { navigation.setPath($0, for: tab) })) {
                         rootView(for: tab)
                             .toolbarBackground(.wehoopBackground, for: .navigationBar)
+                            .navigationDestination(for: AppRoute.self) { root.destination(for: $0) }
                     }
                 } label: {
                     Label(String(localized: tab.title), systemImage: tab.systemImage)
@@ -52,6 +54,9 @@ struct RootTabView: View {
             }
         }
         .tint(.wehoopTint)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if !isOnline { OfflineBanner() }
+        }
     }
 
     @ViewBuilder
@@ -66,6 +71,18 @@ struct RootTabView: View {
     }
 }
 
+/// Shown while the device has no network; followed games catch up when it returns.
+struct OfflineBanner: View {
+    var body: some View {
+        Label(String(localized: "Offline: showing the last update"), systemImage: "wifi.slash")
+            .wehoopFont(.caption)
+            .foregroundStyle(Color.wehoopOnAccent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.xs)
+            .background(Color.wehoopAccent)
+    }
+}
+
 #Preview {
-    RootTabView(tabs: AppTab.allCases)
+    RootTabView(root: CompositionRoot(arguments: [CompositionRoot.fixturesArgument]), navigation: AppNavigation())
 }

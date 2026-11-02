@@ -21,6 +21,14 @@ public struct PostgRESTReader: Sendable {
         return try decode(response.data)
     }
 
+    /// One `v_schedule` row by game id; nil when there is none.
+    public func scheduleRow(id: String) async throws -> ScheduleRow? {
+        try await auth.ensureSignedIn()
+        let response = try await client.from("v_schedule").select().eq("id", value: id).limit(1).execute()
+        let rows: [ScheduleRow] = try decode(response.data)
+        return rows.first
+    }
+
     /// Every `leagues` row.
     public func leagues() async throws -> [LeagueRow] {
         try await auth.ensureSignedIn()

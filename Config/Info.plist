@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged with the generated Info.plist (GENERATE_INFOPLIST_FILE). The three backend values
+     come from Config/WehoopAPI.xcconfig and Config/Supabase.xcconfig. -->
+<plist version="1.0">
+<dict>
+	<key>WehoopAPIURL</key>
+	<string>$(WEHOOP_API_URL)</string>
+	<key>WehoopSupabaseURL</key>
+	<string>$(WEHOOP_SUPABASE_URL)</string>
+	<key>WehoopSupabaseAnonKey</key>
+	<string>$(WEHOOP_SUPABASE_ANON_KEY)</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Wehoop connects to a development server on your local network.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.ChallengerApp.Wehoop</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wehoop</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -1,5 +1,6 @@
 # XcodeGen spec. `xcodegen generate` writes Wehoop.xcodeproj (git-ignored).
-# The app has no xcconfig and no provider key: it talks only to wehoop-api.
+# The app holds no provider key: it talks only to wehoop-api and Supabase, configured per
+# service in Config/*.xcconfig (real values in git-ignored Config/*.local.xcconfig).
 name: Wehoop
 options:
   bundleIdPrefix: com.ChallengerApp
@@ -21,10 +22,20 @@ targets:
     platform: iOS
     sources:
       - path: App
+    configFiles:
+      Debug: Config/Wehoop.xcconfig
+      Release: Config/Wehoop.xcconfig
     dependencies:
-      # App -> every Feature*, WehoopData, DesignSystem, Domain (docs/M5-PLAN.md)
+      # App -> every Feature*, WehoopData, DesignSystem, Domain (docs/M5-PLAN.md); Contracts,
+      # LiveEngine and TestSupport for fixture mode (recorded games, no network).
       - package: WehoopKit
         product: Domain
+      - package: WehoopKit
+        product: Contracts
+      - package: WehoopKit
+        product: LiveEngine
+      - package: WehoopKit
+        product: TestSupport
       - package: WehoopKit
         product: WehoopData
       - package: WehoopKit
@@ -54,6 +65,7 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Wehoop
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

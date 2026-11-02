@@ -1,0 +1,4 @@
+// Copy to Supabase.local.xcconfig (git-ignored) and fill in. Never commit the filled file.
+// Dev stack: `scripts/use-dev-stack.sh` writes it for you from the backend's .env.
+// WEHOOP_SUPABASE_URL = https:/$()/<project-ref>.supabase.co
+WEHOOP_SUPABASE_ANON_KEY = <anon key>
