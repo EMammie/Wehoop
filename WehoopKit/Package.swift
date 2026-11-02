@@ -19,8 +19,11 @@ var targets: [Target] = [
     .target(name: "Domain"),
     .target(name: "Contracts"),
     .target(name: "LiveEngine", dependencies: ["Domain", "Contracts"]),
-    // supabase-swift (exact pin) joins WehoopData in S3.
-    .target(name: "WehoopData", dependencies: ["Domain", "Contracts", "LiveEngine"]),
+    // supabase-swift is pinned exactly and used only inside WehoopData, behind its protocols.
+    .target(
+        name: "WehoopData",
+        dependencies: ["Domain", "Contracts", "LiveEngine", .product(name: "Supabase", package: "supabase-swift")]
+    ),
     .target(
         name: "DesignSystem",
         resources: [.copy("Resources/Fonts")],
@@ -35,7 +38,10 @@ var targets: [Target] = [
     .testTarget(name: "DomainTests", dependencies: ["Domain"]),
     .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
     .testTarget(name: "LiveEngineTests", dependencies: ["LiveEngine", "TestSupport"]),
-    .testTarget(name: "WehoopDataTests", dependencies: ["WehoopData", "TestSupport"]),
+    .testTarget(
+        name: "WehoopDataTests",
+        dependencies: ["WehoopData", "TestSupport", .product(name: "Supabase", package: "supabase-swift")]
+    ),
     .testTarget(name: "DesignSystemTests", dependencies: ["DesignSystem"], swiftSettings: mainActorDefault),
     .testTarget(name: "TestSupportTests", dependencies: ["TestSupport"]),
 ]
@@ -53,6 +59,10 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v26), .macOS(.v26)],
     products: libraries.map { .library(name: $0, targets: [$0]) },
+    dependencies: [
+        // 2.55.4 (2026-10-13). Bump deliberately: WehoopData wraps its Realtime and Auth APIs.
+        .package(url: "https://github.com/supabase/supabase-swift.git", exact: "2.55.4"),
+    ],
     targets: targets,
     swiftLanguageModes: [.v6]
 )

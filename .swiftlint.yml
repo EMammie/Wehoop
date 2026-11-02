@@ -25,6 +25,10 @@ opt_in_rules:
   - modifier_order
   - redundant_nil_coalescing
 
+type_name:
+  excluded:
+    - ID   # typed ids: Game.ID, Player.ID, Team.ID (M5 plan decision 7)
+
 line_length:
   warning: 140
   error: 200
