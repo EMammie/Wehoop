@@ -2,7 +2,9 @@
 
 Status: approved 2026-10-23. Branch `m5-modular`, cut from local `main` at `bf4902a`
 (local `main` is ahead of `origin/main` 9cf4619 and has not been pushed).
-Backend plan: `~/Projects/wehoop-api/docs/PLAN.md` §7 M5 (rev 4.10 records this scope).
+Backend plan: `~/Projects/wehoop-api/docs/PLAN.md` §7 M5 (rev 4.10 records this scope; rev 4.11 adds the `.unknown` cases and the League-as-data rule, rev 4.15 the demo host, B4).
+
+Progress (2026-11-05): S0, S1, S2 and S3 done; S4 in progress (app wired to WehoopData, game screen built; the Simulator recording and the airplane-mode row are still to run); S5–S8 not started. Backend: B1 and B2 done; B3 and B4 not started. Evidence: `devlog/evidence/M5.md`.
 
 ## Owner decisions (2026-10-22/23)
 
@@ -148,7 +150,7 @@ These are not M5 features, but M5 lays the data shapes they will stand on, so th
 | B1 | `pnpm gen:swift`: emit the Contracts Swift files from the Zod schemas (a small TS emitter: discriminated unions become enums with associated values; JSON Schema → quicktype handles unions poorly), plus `pnpm gen:swift --check` for CI on both repos. | 5 |
 | B2 | `pnpm seed:dev`: load every committed fixture (three leagues: schedules, standings, profiles, seasonal stats, leaders, replay games) into the dev stack so every screen has data. An index or view for leaders ordering. | 4 |
 | B3 | **Gap found 2026-10-23**: the production scheduler fetches only `daily_schedule`. Standings, team and player profiles, seasonal stats and league leaders are processable by `ReferenceIngester` but nothing schedules them. Add a reference refresh (standings daily, rosters and profiles weekly, season stats nightly) under the quota guard. Needed before TestFlight users see real Leaders, Standings or Team pages; it runs only once production keys exist. | 6 |
-| B4 | A hosted backend for TestFlight: the M4 Fly deploy (waits on the M3 polling validation and a Fly payment card) on Supabase cloud `zkubduorxbfgjxjepbdo`. Before production keys exist, the hosted worker runs simulation replays, so testers see a recorded game live. | in M4 |
+| B4 | A hosted backend for TestFlight (backend plan rev 4.15, owner decision 2026-11-05). The M4 Fly deploy on Supabase cloud `zkubduorxbfgjxjepbdo` waits only on a Fly payment card and the owner's go; without production keys it is a quiet deploy that ingests nothing (the Fly worker can start only in production mode, which needs production keys). B4 adds a **demo host** on the worker machine: the fake provider on loopback serves a rotation of the committed recordings, one replay game every 3 h at real-time speed, each a fresh game with its timestamps shifted to the slot, and the production scheduler runs against it as a rehearsal (no Sportradar call, nothing counted). Every such game carries `games.is_replay`, and the app shows **Replay** on its score card and game screen, so testers never take a recording for a live game; `pnpm demo purge` removes replay games before the switch to production keys. | 10 (+2 app) |
 
 ## Slices
 
@@ -166,7 +168,7 @@ Each slice runs implementer → reviewer → validator → devlog, as in wehoop-
 | S7 | **Onboarding and polish.** Onboarding port; accessibility (VoiceOver labels, Dynamic Type at XXL, Reduce Motion); dark mode; haptics on score changes. | Accessibility Inspector audit with no warnings on each screen; screenshots in light, dark and XXL. | 6 |
 | S8 | **Beta.** Delete `Legacy/`; App Store Connect record; TestFlight build against the hosted backend (B4); 3–5 testers from the wehoop-landing list; the **held-profiles decision checkpoint** (backend plan rev 4.5, from the M3 hold count). | TestFlight build number; tester count; the checkpoint decision recorded. | 6 |
 
-**Hours and calendar:** the app slices total **86 h**, and B1–B3 add **15 h**, about **101 h** in all (plan rev 4.9 budgeted 26 h for M5). At 20 h/week that is about 5 weeks.
+**Hours and calendar:** the app slices total **86 h** (88 with B4's Replay label), and B1–B4 add **25 h**, about **113 h** in all (101 before rev 4.15 added B4; plan rev 4.9 budgeted 26 h for M5). At 20 h/week that is about 5 weeks.
 
 S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and no trial stack. They can run alongside the Game 4 run (2026-10-24) and the NCAAWB live window (about 2026-11-03 to 11-15; the trial ends 2026-11-16). S8 waits for B4.
 
@@ -184,7 +186,7 @@ S0–S7 need only the dev stack and simulation fixtures: no Sportradar quota and
 
 | Item | What it needs | Notes |
 |---|---|---|
-| Overseas leagues (EuroLeague Women, Turkey, Spain, France, Australia WNBL, China WCBA) | Backend: a Global Basketball API trial key (separate product and quota), an adapter over its `sr_id` system, the mapping feeds to link `sr:player:` ids to the WNBA and NCAAWB ids `identity.ts` already holds, and either new `league_code` values or a `competitions` table behind `seasons`. App: nothing beyond new `League` rows, if the rule above holds. | Sportradar publishes no list of which women's competitions the product covers; the trial confirms it. Lower-tier coverage: season lines and box scores, not play-by-play. Queued for backend plan rev 4.11 after G5. |
+| Overseas leagues (EuroLeague Women, Turkey, Spain, France, Australia WNBL, China WCBA) | Backend: a Global Basketball API trial key (separate product and quota), an adapter over its `sr_id` system, the mapping feeds to link `sr:player:` ids to the WNBA and NCAAWB ids `identity.ts` already holds, and one `leagues` row per competition (`provider_product`, `provider_competition_id`). App: nothing beyond new `League` rows, if the rule above holds. | Sportradar publishes no list of which women's competitions the product covers; the trial confirms it. Lower-tier coverage: season lines and box scores, not play-by-play. Backend plan rev 4.11 (2026-10-27) decided the shape: each competition the app lists is a `leagues` row (no `competitions` table), `league_code` becomes open data in M6, and the generated contracts keep an `.unknown` case; team identity is decided at the M6 gate. |
 | Growth over time | `FeaturePlayers`: per-stat trend charts over `PlayerCareer`, a season-vs-season comparison, the full game log with filters. Backend: a decision on backfilling past seasons through B3. | No new data shapes. |
 | Live Activities and widgets | A second `GameSync` consumer in an extension target. | Already listed above. |
 | Push notifications | Backend sender + APNs; favorites drive the subscriptions. | |
