@@ -4,6 +4,8 @@
 #
 #   scripts/cloud-reject-test.sh          the cloud project, from .env.cloud-test
 #   scripts/cloud-reject-test.sh --dev    the same tests on the local dev stack (a dry run)
+#   scripts/cloud-reject-test.sh --env-file .env.demo-test   another hosted project (the demo
+#                                         environment, backend plan rev 4.15); same two lines
 #
 # .env.cloud-test is git-ignored and filled by the owner with two lines:
 #   WEHOOP_SUPABASE_URL=https://<ref>.supabase.co
@@ -18,6 +20,10 @@ ROOT=$PWD
 ENV_FILE=.env.cloud-test
 MODE=cloud
 [[ ${1:-} == --dev ]] && MODE=dev
+if [[ ${1:-} == --env-file ]]; then
+  [[ -n ${2:-} ]] || { echo "STOP: --env-file needs a file"; exit 64; }
+  ENV_FILE=$2
+fi
 
 if [[ $MODE == cloud ]]; then
   [[ -f $ENV_FILE ]] || { echo "STOP: $ENV_FILE is missing"; exit 64; }

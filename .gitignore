@@ -120,3 +120,6 @@ Config.xcconfig
 .local-runs/
 # Per-service build settings with real values (Config/*.xcconfig include them)
 Config/*.local.xcconfig
+
+# the demo project (backend plan rev 4.15) for scripts/cloud-reject-test.sh --env-file
+.env.demo-test
