@@ -85,7 +85,7 @@ public struct WeekStrip: View {
                     .monospacedDigit()
             }
             .foregroundStyle(selected ? Color.wehoopOnAccent : Color.wehoopTextPrimary)
-            .frame(minWidth: 48, minHeight: 48)
+            .frame(minWidth: TapTarget.minimum, minHeight: TapTarget.minimum)
             .padding(.horizontal, Spacing.xs)
             .padding(.vertical, Spacing.xs)
             .background(selected ? Color.wehoopAccent : Color.clear, in: RoundedRectangle(cornerRadius: Radius.medium))

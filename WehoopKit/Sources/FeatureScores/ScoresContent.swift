@@ -2,17 +2,19 @@ import Domain
 import Foundation
 
 /// One day of one league, split into the sections the list shows: live first, then
-/// upcoming, then final, each by tip-off time. A status this build does not know goes to
+/// upcoming, then final, then games that will not be played as scheduled (cancelled,
+/// postponed, not needed), each by tip-off time. A status this build does not know goes to
 /// its own section rather than being guessed into another.
 public struct ScoresContent: Equatable, Sendable {
     public enum Kind: Hashable, Sendable, CaseIterable {
-        case live, upcoming, final, other
+        case live, upcoming, final, notPlayed, other
 
         public var title: String {
             switch self {
             case .live: String(localized: "Live")
             case .upcoming: String(localized: "Upcoming")
             case .final: String(localized: "Final")
+            case .notPlayed: String(localized: "Not played")
             case .other: String(localized: "Other")
             }
         }
@@ -40,11 +42,15 @@ public struct ScoresContent: Equatable, Sendable {
     public var cards: [ScoreCard] { sections.flatMap(\.cards) }
 
     public static func kind(_ game: Game) -> Kind {
+        switch game.status {
+        case .cancelled, .postponed, .unnecessary: return .notPlayed
+        default: break
+        }
         switch game.status.phase {
-        case .live: .live
-        case .pre: .upcoming
-        case .post: .final
-        case nil: .other
+        case .live: return .live
+        case .pre: return .upcoming
+        case .post: return .final
+        case nil: return .other
         }
     }
 }

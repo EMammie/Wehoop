@@ -61,9 +61,13 @@ struct FixtureScoresFlowTests {
         let model = ScoresViewModel(dependencies: ScoresDependencies(
             leagues: backend.leagues, schedule: backend.schedule, liveScores: backend.liveScores
         ))
-        await model.run()
-        let task = Task { await model.run() }
-        defer { task.cancel() }
+        await model.follow()   // loads the leagues and selects the first, as the screen's first run does
+        let follow = Task { await model.follow() }
+        let load = Task { await model.load() }
+        defer {
+            follow.cancel()
+            load.cancel()
+        }
         var seen: [String] = []
         for _ in 0..<100 {
             try await Task.sleep(for: .milliseconds(50))

@@ -11,6 +11,12 @@ nonisolated public enum Spacing {
     public static let xxl: CGFloat = 32
 }
 
+/// Minimum sizes for things people tap.
+nonisolated public enum TapTarget {
+    /// The smallest side of a tappable control (above the 44 pt platform minimum, for the date strip's cells).
+    public static let minimum: CGFloat = 48
+}
+
 /// Corner radii. `pill` matches the landing page's rounded buttons and chips.
 nonisolated public enum Radius {
     public static let small: CGFloat = 4

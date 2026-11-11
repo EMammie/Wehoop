@@ -29,7 +29,7 @@ public struct ScoresScreen: View {
                 )
             }
             WeekStrip(
-                days: model.days, today: model.today,
+                days: model.days, today: model.today, calendar: model.calendar,
                 selection: Binding(get: { model.selectedDay }, set: { model.select(day: $0) })
             )
             content
@@ -38,7 +38,17 @@ public struct ScoresScreen: View {
         .padding(.top, Spacing.s)
         .background(Color.wehoopBackground)
         .navigationTitle(String(localized: "Scores"))
-        .task(id: model.runKey) { await model.run() }
+        // The channel follows the league; a day tap only re-reads (see ScoresViewModel).
+        .task(id: model.subscriptionKey) { await model.follow() }
+        .task(id: model.readKey) { await model.load() }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            model.dayMayHaveChanged()
+        }
+        #if canImport(UIKit)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            model.dayMayHaveChanged()
+        }
+        #endif
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background: wasInBackground = true
@@ -54,7 +64,7 @@ public struct ScoresScreen: View {
     private var content: some View {
         switch model.state {
         case .loading:
-            ProgressView()
+            ProgressView(String(localized: "Loading games"))
         case .empty:
             ScrollView {
                 ContentUnavailableView {
@@ -123,6 +133,14 @@ public struct ScoresScreen: View {
 struct ScoreCardView: View {
     let card: ScoreCard
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// Side by side normally; at accessibility sizes the status goes under the teams.
+    private var layout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.s))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: Spacing.m))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
@@ -136,17 +154,17 @@ struct ScoreCardView: View {
                     }
                 }
             }
-            HStack(alignment: .center, spacing: Spacing.m) {
+            layout {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     team(.away)
                     team(.home)
                 }
-                Spacer(minLength: Spacing.s)
-                VStack(alignment: .trailing, spacing: Spacing.xxs) {
+                if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: Spacing.s) }
+                VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: Spacing.xxs) {
                     Text(card.statusText)
                         .wehoopFont(.eyebrow)
                         .textCase(.uppercase)
-                        .multilineTextAlignment(.trailing)
+                        .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
                         .foregroundStyle(card.isLive ? Color.wehoopLive : Color.wehoopTextSecondary)
                     if let target = card.targetText {
                         Text(target)

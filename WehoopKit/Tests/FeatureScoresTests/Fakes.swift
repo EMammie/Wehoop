@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import Observation
 import Synchronization
 import Testing
 @testable import FeatureScores
@@ -53,23 +54,86 @@ final class StubSchedule: ScheduleRepository {
     func game(id: Game.ID) async throws -> Game? { nil }
 }
 
-/// A scoreboard the test drives: each `scores` call is one subscription.
+/// A scoreboard the test drives: each `scores` call is one subscription, whose end
+/// (cancelled consumer or finished stream) is recorded.
 final class ScriptedScores: LiveScoresSource {
-    private let state = Mutex<(leagues: [League.Code], current: AsyncStream<LiveScoresEvent>.Continuation?)>(([], nil))
+    private struct State {
+        var leagues: [League.Code] = []
+        var current: AsyncStream<LiveScoresEvent>.Continuation?
+        var terminated: Set<Int> = []
+    }
+
+    private let state = Mutex(State())
 
     var subscriptions: [League.Code] { state.withLock { $0.leagues } }
+    /// Indexes (into `subscriptions`) of the streams that have ended.
+    var terminated: Set<Int> { state.withLock { $0.terminated } }
+    /// Subscriptions whose stream is still open.
+    var open: Int { state.withLock { $0.leagues.count - $0.terminated.count } }
 
     func scores(league: League.Code) -> AsyncStream<LiveScoresEvent> {
         let (stream, continuation) = AsyncStream.makeStream(of: LiveScoresEvent.self)
         state.withLock {
+            let index = $0.leagues.count
             $0.leagues.append(league)
             $0.current = continuation
+            continuation.onTermination = { [weak self] _ in
+                _ = self?.state.withLock { $0.terminated.insert(index) }
+            }
         }
         return stream
     }
 
     func send(_ event: LiveScoresEvent) { state.withLock { $0.current }?.yield(event) }
     func end() { state.withLock { $0.current }?.finish() }
+}
+
+/// Runs `action` the way `.task(id:)` does: started at once, cancelled and started again
+/// whenever `key` changes, cancelled by `cancel()`.
+@MainActor
+final class KeyedTask<Key: Hashable> {
+    private let key: () -> Key
+    private let action: () async -> Void
+    private var current: Key
+    private var task: Task<Void, Never>?
+    private(set) var starts = 0
+    private var stopped = false
+
+    init(key: @escaping () -> Key, action: @escaping () async -> Void) {
+        self.key = key
+        self.action = action
+        current = key()
+        start()
+        observe()
+    }
+
+    private func start() {
+        starts += 1
+        task = Task { await action() }
+    }
+
+    private func observe() {
+        withObservationTracking { _ = key() } onChange: { [weak self] in
+            Task { @MainActor in self?.keyChanged() }
+        }
+    }
+
+    private func keyChanged() {
+        guard !stopped else { return }
+        let new = key()
+        if new != current {
+            task?.cancel()
+            current = new
+            start()
+        }
+        observe()
+    }
+
+    func cancel() async {
+        stopped = true
+        task?.cancel()
+        await task?.value
+    }
 }
 
 /// Sleeps that wait until the test releases them (the periodic re-read).
