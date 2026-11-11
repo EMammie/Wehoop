@@ -104,31 +104,59 @@ struct GuestChannel {
         } onEnd: {
             continuation.finish()
         }
-        defer { watcher.cancel() }
+        let remove: @Sendable () async -> Void = { [realtime] in await realtime.removeChannel(channel) }
         do {
             try await channel.subscribeWithError()
         } catch {
-            diagnostics.record("join \(topic): \(error)")
-            await realtime.removeChannel(channel)
+            // Leaving while the join was under way is not a failure of the channel.
+            if !(error is CancellationError), !Task.isCancelled { diagnostics.record("join \(topic): \(error)") }
+            await Self.leave(watcher: watcher, remove: remove)
             return
         }
         for await message in broadcasts {
             if Task.isCancelled { break }
             if let decoded = decode(message) { continuation.yield(decoded) }
         }
-        await realtime.removeChannel(channel)
+        await Self.leave(watcher: watcher, remove: remove)
     }
 
-    /// Follows the channel's status: a join calls `onJoin`; a loss starts the rejoin, and a
-    /// rejoin that fails calls `onEnd`.
+    /// Leaves a channel: the status watcher, and any rejoin it started, are stopped and
+    /// awaited first, so nothing resubscribes the instance while `removeChannel` is
+    /// unsubscribing it (a normal leave looks like a loss to the watcher, and its rejoin
+    /// would race the next holder of the topic).
+    static func leave(watcher: Task<Void, Never>, remove: @Sendable () async -> Void) async {
+        watcher.cancel()
+        await watcher.value
+        await remove()
+    }
+
+    /// Follows the channel's status (`watchStatuses`).
     private func watch(
         _ channel: RealtimeChannelV2, onJoin: @escaping @Sendable () -> Void, onEnd: @escaping @Sendable () -> Void
     ) -> Task<Void, Never> {
-        let (topic, rejoin, diagnostics) = (topic, rejoin, diagnostics)
+        let (topic, diagnostics) = (topic, diagnostics)
+        return Self.watchStatuses(channel.statusChange, rejoin: rejoin, hooks: StatusHooks(
+            isRecovering: { [.subscribing, .subscribed].contains(channel.status) },
+            subscribe: { try await channel.subscribeWithError() },
+            onJoin: onJoin,
+            onEnd: {
+                diagnostics.record("\(topic) left and could not rejoin")
+                onEnd()
+            }
+        ))
+    }
+
+    /// Follows a channel's statuses: a join calls `onJoin`; a loss starts the rejoin, and a
+    /// rejoin that fails calls `onEnd`. Cancelled, it stops and waits for a rejoin under way
+    /// (its `subscribe` may be in flight), so `leave` can remove the channel after it.
+    static func watchStatuses(
+        _ statuses: AsyncStream<RealtimeChannelStatus>, rejoin: RejoinPolicy, hooks: StatusHooks
+    ) -> Task<Void, Never> {
+        let (isRecovering, subscribe, onJoin, onEnd) = (hooks.isRecovering, hooks.subscribe, hooks.onJoin, hooks.onEnd)
         return Task {
             var watch = ChannelWatch()
             var recovery: Task<Void, Never>?
-            for await status in channel.statusChange {
+            for await status in statuses {
                 switch watch.observe(status) {
                 case .joined:
                     recovery?.cancel()
@@ -137,22 +165,27 @@ struct GuestChannel {
                 case .lost:
                     recovery?.cancel()
                     recovery = Task {
-                        let rejoined = await rejoin.run(
-                            isRecovering: { [.subscribing, .subscribed].contains(channel.status) },
-                            subscribe: { try await channel.subscribeWithError() }
-                        )
-                        if !rejoined, !Task.isCancelled {
-                            diagnostics.record("\(topic) left and could not rejoin")
-                            onEnd()
-                        }
+                        let rejoined = await rejoin.run(isRecovering: isRecovering, subscribe: subscribe)
+                        if !rejoined, !Task.isCancelled { onEnd() }
                     }
                 case nil:
                     break
                 }
             }
             recovery?.cancel()
+            await recovery?.value
         }
     }
+}
+
+/// What the status watcher does to a channel.
+struct StatusHooks: Sendable {
+    /// Whether the channel is rejoining by itself.
+    let isRecovering: @Sendable () -> Bool
+    let subscribe: @Sendable () async throws -> Void
+    let onJoin: @Sendable () -> Void
+    /// The rejoin failed: the subscription ends.
+    let onEnd: @Sendable () -> Void
 }
 
 /// One subscription at a time per topic: a subscription of a topic starts only once the
@@ -201,6 +234,8 @@ actor TopicGate {
 
     /// Topics held now (tests).
     var heldTopics: Set<String> { held }
+    /// Subscriptions waiting for a topic now (tests).
+    var waitingCount: Int { waiters.values.reduce(0) { $0 + $1.count } }
 }
 
 /// The last reason a transport's subscription ended early.

@@ -62,8 +62,9 @@ struct TopicGateTests {
         let first = subscription("A", gate: gate, topic: "t", log: log)
         #expect(await eventually { log.all == ["A join"] })
         let waiting = subscription("B", gate: gate, topic: "t", log: log)
-        try? await Task.sleep(for: .milliseconds(20))
-        waiting.cancel()
+        #expect(await eventually { await gate.waitingCount == 1 })   // B is parked on the gate
+        waiting.cancel()                                             // onCancel wakes it
+        #expect(await eventually { await gate.waitingCount == 0 })
         await waiting.value
         first.cancel()
         await first.value
