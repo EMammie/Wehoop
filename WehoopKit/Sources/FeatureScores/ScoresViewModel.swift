@@ -120,13 +120,18 @@ public final class ScoresViewModel {
     }
 
     /// The calendar day or the clock changed (`NSCalendarDayChanged`, a significant time
-    /// change): the strip moves to the new today, and so does a selection that was on the old one.
+    /// change): the strip moves to the new today, and so does a selection that was on the
+    /// old one; a picked day the strip no longer shows is clamped into it.
     public func dayMayHaveChanged() {
         let newToday = calendar.startOfDay(for: dependencies.now())
         guard newToday != today else { return }
         if selectedDay == today { selectedDay = newToday }
         today = newToday
         days = Self.days(around: newToday, count: daysAround, calendar: calendar)
+        // A picked day the strip no longer shows moves to its nearest end.
+        if let first = days.first, let last = days.last {
+            selectedDay = min(max(selectedDay, first), last)
+        }
     }
 
     /// After a failure: start over.

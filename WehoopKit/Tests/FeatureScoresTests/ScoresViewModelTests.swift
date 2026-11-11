@@ -166,6 +166,12 @@ struct ScoresViewModelTests {
         let key = model.readKey
         model.dayMayHaveChanged()
         #expect(model.readKey == key, "the same day changes nothing")
+
+        // A picked day the strip no longer shows is clamped to its nearest end.
+        model.select(day: model.days[0])
+        clock.advance(4 * 86_400)
+        model.dayMayHaveChanged()
+        #expect(model.selectedDay == model.days[0] && model.days.contains(model.selectedDay))
     }
 
     @Test("A day without games is empty, not loading or failed")
@@ -195,16 +201,17 @@ struct ScoresViewModelTests {
         #expect(cards(model).map(\.id.rawValue) == ["g1", "g2"])
         #expect(card(model, "g1")?.game.score == Score(home: 2, away: 0) && card(model, "g1")?.statusText == "Q2 4:12")
 
-        // Older than g2's row (observed at t0), then a repeat of g1's update: neither changes anything.
+        // Older than g2's row (observed at t0): ignored. A sentinel on g1 behind it shows when it was handled.
         scores.send(.updates([Sample.update("g2", score: Score(home: 0, away: 0), seq: 41, observedAt: t0 - 5)]))
-        scores.send(.updates([Sample.update("g1", score: Score(home: 9, away: 9), seq: 1, observedAt: t0 + 5)]))
-        // A sentinel behind them: once it shows, the two before it have been handled.
         scores.send(.updates([Sample.update("g1", score: Score(home: 4, away: 0), seq: 2, observedAt: t0 + 6)]))
         #expect(await eventually { card(model, "g1")?.game.score == Score(home: 4, away: 0) })
         #expect(card(model, "g2")?.game.score == Score(home: 10, away: 9), "the stale update was ignored")
 
+        // A repeat of g1's last update (same seq and time, other score): ignored. Sentinel on g2.
+        scores.send(.updates([Sample.update("g1", score: Score(home: 9, away: 9), seq: 2, observedAt: t0 + 6)]))
         scores.send(.updates([Sample.update("g2", score: Score(home: 12, away: 9), seq: 42, observedAt: t0 + 6)]))
         #expect(await eventually { card(model, "g2")?.game.score == Score(home: 12, away: 9) })
+        #expect(card(model, "g1")?.game.score == Score(home: 4, away: 0), "the repeated update was ignored")
         scores.send(.updates([Sample.update("g2", score: Score(home: 80, away: 70), status: .closed, seq: 90, observedAt: t0 + 7)]))
         #expect(await eventually { sections(model) == [.live, .final] })
         await screen.cancel()

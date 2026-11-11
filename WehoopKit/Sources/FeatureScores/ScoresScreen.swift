@@ -1,3 +1,4 @@
+import Combine
 import DesignSystem
 import Domain
 import SwiftUI
@@ -27,11 +28,14 @@ public struct ScoresScreen: View {
                     items: model.leagues.map { ChipPicker.Item(id: $0.code, title: $0.shortName) },
                     selection: Binding(get: { model.selectedLeague }, set: { if let code = $0 { model.select(league: code) } })
                 )
+                // The pickers stay above the list: capped so the games keep most of the screen.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             }
             WeekStrip(
                 days: model.days, today: model.today, calendar: model.calendar,
                 selection: Binding(get: { model.selectedDay }, set: { model.select(day: $0) })
             )
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -41,11 +45,14 @@ public struct ScoresScreen: View {
         // The channel follows the league; a day tap only re-reads (see ScoresViewModel).
         .task(id: model.subscriptionKey) { await model.follow() }
         .task(id: model.readKey) { await model.load() }
-        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+        // NSCalendarDayChanged can be posted off the main thread: hop before touching the model.
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in
             model.dayMayHaveChanged()
         }
         #if canImport(UIKit)
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+        .onReceive(
+            NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: DispatchQueue.main)
+        ) { _ in
             model.dayMayHaveChanged()
         }
         #endif
