@@ -29,8 +29,13 @@ public struct SupabaseServices: Sendable {
     }
 
     public var reader: PostgRESTReader { PostgRESTReader(client: client, auth: auth) }
-    public var transport: RealtimeTransport { RealtimeTransport(client: client, auth: auth) }
-    public var scoreboardTransport: RealtimeScoreboardTransport { RealtimeScoreboardTransport(client: client, auth: auth) }
+    /// One subscription at a time per Realtime topic, across every transport of this client.
+    let topics = TopicGate()
+
+    public var transport: RealtimeTransport { RealtimeTransport(client: client, auth: auth, topics: topics) }
+    public var scoreboardTransport: RealtimeScoreboardTransport {
+        RealtimeScoreboardTransport(client: client, auth: auth, topics: topics)
+    }
 }
 
 /// Session storage for tests: a locked dictionary.

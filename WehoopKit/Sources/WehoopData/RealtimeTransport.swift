@@ -20,14 +20,19 @@ import Synchronization
 public struct RealtimeTransport: GameTransport {
     let client: SupabaseClient
     let auth: AuthSession
+    /// Shared by every transport of the client (`SupabaseServices`).
+    let topics: TopicGate
     var rejoin = RejoinPolicy()
 
     /// Why subscriptions of this transport ended early (join refused, sign-in failed).
     public let diagnostics = TransportDiagnostics()
 
     public func messages(gameId: String) -> AsyncStream<TransportMessage> {
-        GuestChannel(realtime: client.realtimeV2, auth: auth, topic: "game:\(gameId)", rejoin: rejoin, diagnostics: diagnostics)
-            .messages(joined: .reconnected, decode: Self.decode)
+        GuestChannel(
+            realtime: client.realtimeV2, auth: auth, topic: "game:\(gameId)", rejoin: rejoin, diagnostics: diagnostics,
+            topics: topics
+        )
+        .messages(joined: .reconnected, decode: Self.decode)
     }
 
     /// A broadcast message (`{event, payload, type}`) as a transport message; nil for an
@@ -52,12 +57,18 @@ public struct RealtimeTransport: GameTransport {
 /// every broadcast with `decode`, yield `joined` on every transition into `subscribed`, and
 /// rejoin a lost channel with `rejoin` (the stream finishes when that fails). Shared by
 /// the game channels (`RealtimeTransport`) and the league scoreboards (`RealtimeScoreboardTransport`).
+///
+/// Subscriptions of one topic are serialized through `topics`: supabase-swift hands out
+/// one channel instance per topic and drops it from its map only after `removeChannel`'s
+/// unsubscribe finishes, so a join that started while the previous subscription of the
+/// topic was still leaving would get the leaving instance and not rejoin for 30-40 s.
 struct GuestChannel {
     let realtime: RealtimeClientV2
     let auth: AuthSession
     let topic: String
     let rejoin: RejoinPolicy
     let diagnostics: TransportDiagnostics
+    let topics: TopicGate
 
     func messages<Message: Sendable>(
         joined: Message, decode: @escaping @Sendable (JSONObject) -> Message?
@@ -71,31 +82,41 @@ struct GuestChannel {
                 continuation.finish()
                 return
             }
-            let channel = realtime.channel(topic) { $0.isPrivate = true }
-            let broadcasts = channel.broadcastStream(event: "*")
-            let watcher = watch(channel) {
-                continuation.yield(joined)
-            } onEnd: {
-                continuation.finish()
+            await topics.serialized(topic) {
+                guard !Task.isCancelled else { return }
+                await follow(joined: joined, decode: decode, continuation: continuation)
             }
-            defer { watcher.cancel() }
-            do {
-                try await channel.subscribeWithError()
-            } catch {
-                diagnostics.record("join \(topic): \(error)")
-                await realtime.removeChannel(channel)
-                continuation.finish()
-                return
-            }
-            for await message in broadcasts {
-                if Task.isCancelled { break }
-                if let decoded = decode(message) { continuation.yield(decoded) }
-            }
-            await realtime.removeChannel(channel)
             continuation.finish()
         }
         continuation.onTermination = { _ in task.cancel() }
         return stream
+    }
+
+    /// Join, deliver until cancelled, and remove the channel (always, before returning).
+    private func follow<Message: Sendable>(
+        joined: Message, decode: @escaping @Sendable (JSONObject) -> Message?,
+        continuation: AsyncStream<Message>.Continuation
+    ) async {
+        let channel = realtime.channel(topic) { $0.isPrivate = true }
+        let broadcasts = channel.broadcastStream(event: "*")
+        let watcher = watch(channel) {
+            continuation.yield(joined)
+        } onEnd: {
+            continuation.finish()
+        }
+        defer { watcher.cancel() }
+        do {
+            try await channel.subscribeWithError()
+        } catch {
+            diagnostics.record("join \(topic): \(error)")
+            await realtime.removeChannel(channel)
+            return
+        }
+        for await message in broadcasts {
+            if Task.isCancelled { break }
+            if let decoded = decode(message) { continuation.yield(decoded) }
+        }
+        await realtime.removeChannel(channel)
     }
 
     /// Follows the channel's status: a join calls `onJoin`; a loss starts the rejoin, and a
@@ -132,6 +153,54 @@ struct GuestChannel {
             recovery?.cancel()
         }
     }
+}
+
+/// One subscription at a time per topic: a subscription of a topic starts only once the
+/// previous one has removed its channel. A waiting subscription that is cancelled stops
+/// waiting.
+actor TopicGate {
+    private var held: Set<String> = []
+    private var waiters: [String: [UUID: CheckedContinuation<Void, Never>]] = [:]
+
+    init() {}
+
+    /// Runs `body` holding `topic`, after any earlier holder has finished.
+    nonisolated func serialized(_ topic: String, _ body: @Sendable () async -> Void) async {
+        guard await acquire(topic) else { return }
+        await body()
+        await release(topic)
+    }
+
+    /// True once `topic` is held by the caller; false when the caller was cancelled while waiting.
+    private func acquire(_ topic: String) async -> Bool {
+        while held.contains(topic) {
+            if Task.isCancelled { return false }
+            let id = UUID()
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    waiters[topic, default: [:]][id] = continuation
+                }
+            } onCancel: {
+                Task { await self.wake(topic, id) }
+            }
+        }
+        if Task.isCancelled { return false }
+        held.insert(topic)
+        return true
+    }
+
+    private func release(_ topic: String) {
+        held.remove(topic)
+        let all = waiters.removeValue(forKey: topic) ?? [:]
+        all.values.forEach { $0.resume() }
+    }
+
+    private func wake(_ topic: String, _ id: UUID) {
+        waiters[topic]?.removeValue(forKey: id)?.resume()
+    }
+
+    /// Topics held now (tests).
+    var heldTopics: Set<String> { held }
 }
 
 /// The last reason a transport's subscription ended early.

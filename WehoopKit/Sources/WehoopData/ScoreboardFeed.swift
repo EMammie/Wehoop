@@ -24,6 +24,8 @@ public protocol ScoreboardTransport: Sendable {
 public struct RealtimeScoreboardTransport: ScoreboardTransport {
     let client: SupabaseClient
     let auth: AuthSession
+    /// Shared by every transport of the client (`SupabaseServices`).
+    let topics: TopicGate
     var rejoin = RejoinPolicy()
 
     /// Why subscriptions of this transport ended early (join refused, sign-in failed).
@@ -31,7 +33,8 @@ public struct RealtimeScoreboardTransport: ScoreboardTransport {
 
     public func messages(league: String) -> AsyncStream<ScoreboardMessage> {
         GuestChannel(
-            realtime: client.realtimeV2, auth: auth, topic: "league:\(league):scores", rejoin: rejoin, diagnostics: diagnostics
+            realtime: client.realtimeV2, auth: auth, topic: "league:\(league):scores", rejoin: rejoin, diagnostics: diagnostics,
+            topics: topics
         )
         .messages(joined: .reconnected, decode: Self.decode)
     }
