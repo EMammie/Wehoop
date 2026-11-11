@@ -10,13 +10,7 @@ enum GameFormat {
     }
 
     static func periodLabel(_ period: GamePeriod) -> String {
-        switch period.kind {
-        case .quarter: "Q\(period.number)"
-        case .half: "H\(period.number)"
-        case .overtime: period.number <= 1 ? "OT" : "\(period.number)OT"
-        case .elam: String(localized: "Elam")
-        case .unknown, nil: "P\(period.number)"
-        }
+        period.shortLabel
     }
 
     /// A count, or an en dash when the provider did not report it (never a made-up 0).

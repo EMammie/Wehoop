@@ -103,31 +103,10 @@ public struct GameContent: Equatable, Sendable {
         }
     }
 
-    /// "Final" once the provider has validated the result; "Final · unofficial" while the
-    /// statistics are still being validated (`complete`).
+    /// The shared status line (Domain's `GameStatus.text`): tip-off time, period, Halftime,
+    /// "Final · unofficial" while validating, Final, Final/OT.
     public var statusText: String {
-        let live = live
-        switch live.status {
-        case .scheduled, .created, .ifNecessary:
-            return schedule.map { $0.scheduledAt.formatted(date: .omitted, time: .shortened) } ?? String(localized: "Scheduled")
-        case .timeTBD: return String(localized: "Time TBD")
-        case .inProgress: return live.period.map(GameFormat.periodLabel) ?? String(localized: "Live")
-        case .halftime: return String(localized: "Halftime")
-        case .delayed: return String(localized: "Delayed")
-        case .complete: return finalText + " · " + String(localized: "unofficial")
-        case .closed: return finalText
-        case .cancelled: return String(localized: "Cancelled")
-        case .postponed: return String(localized: "Postponed")
-        case .unnecessary: return String(localized: "Not needed")
-        case .unknown(let raw): return raw
-        }
-    }
-
-    private var finalText: String {
-        switch live.period?.kind {
-        case .overtime: String(localized: "Final/OT")
-        default: String(localized: "Final")
-        }
+        live.status.text(scheduledAt: schedule?.scheduledAt, period: live.period)
     }
 
     public var isLive: Bool { live.status.phase == .live }
