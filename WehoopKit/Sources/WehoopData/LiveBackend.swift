@@ -10,6 +10,8 @@ public final class LiveBackend: Sendable {
     public let liveGames: GameSyncRegistry
     public let leagues: any LeagueRepository
     public let schedule: any ScheduleRepository
+    /// `league:{code}:scores`, for the Scores list.
+    public let liveScores: any LiveScoresSource
     public let players: any PlayerRepository
     public let favorites: FavoritesStore
 
@@ -28,6 +30,7 @@ public final class LiveBackend: Sendable {
         liveGames = GameSyncRegistry(transport: services.transport, api: api)
         leagues = LeagueRepositoryImpl(rows: services.reader, cache: cache)
         schedule = ScheduleRepositoryImpl(rows: services.reader, cache: cache)
+        liveScores = ScoreboardFeed(transport: services.scoreboardTransport)
         players = PlayerRepositoryImpl(api: api)
         favorites = FavoritesStore(store: store)
     }

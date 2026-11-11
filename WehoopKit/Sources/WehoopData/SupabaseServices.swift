@@ -30,6 +30,7 @@ public struct SupabaseServices: Sendable {
 
     public var reader: PostgRESTReader { PostgRESTReader(client: client, auth: auth) }
     public var transport: RealtimeTransport { RealtimeTransport(client: client, auth: auth) }
+    public var scoreboardTransport: RealtimeScoreboardTransport { RealtimeScoreboardTransport(client: client, auth: auth) }
 }
 
 /// Session storage for tests: a locked dictionary.

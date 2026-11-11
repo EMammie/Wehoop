@@ -26,73 +26,8 @@ public struct RealtimeTransport: GameTransport {
     public let diagnostics = TransportDiagnostics()
 
     public func messages(gameId: String) -> AsyncStream<TransportMessage> {
-        let (stream, continuation) = AsyncStream.makeStream(of: TransportMessage.self)
-        let realtime = client.realtimeV2
-        let (auth, rejoin, diagnostics) = (auth, rejoin, diagnostics)
-        let task = Task {
-            do {
-                try await auth.ensureSignedIn()
-            } catch {
-                diagnostics.record("sign-in: \(error)")
-                continuation.finish()
-                return
-            }
-            let channel = realtime.channel("game:\(gameId)") { $0.isPrivate = true }
-            let broadcasts = channel.broadcastStream(event: "*")
-            let watcher = Self.watch(channel, gameId: gameId, rejoin: rejoin, diagnostics: diagnostics, continuation: continuation)
-            defer { watcher.cancel() }
-            do {
-                try await channel.subscribeWithError()
-            } catch {
-                diagnostics.record("join game:\(gameId): \(error)")
-                await realtime.removeChannel(channel)
-                continuation.finish()
-                return
-            }
-            for await message in broadcasts {
-                if Task.isCancelled { break }
-                if let decoded = Self.decode(message) { continuation.yield(decoded) }
-            }
-            await realtime.removeChannel(channel)
-            continuation.finish()
-        }
-        continuation.onTermination = { _ in task.cancel() }
-        return stream
-    }
-
-    /// Follows the channel's status: a join yields `.reconnected`; a loss starts the rejoin,
-    /// and a rejoin that fails finishes the stream.
-    private static func watch(
-        _ channel: RealtimeChannelV2, gameId: String, rejoin: RejoinPolicy, diagnostics: TransportDiagnostics,
-        continuation: AsyncStream<TransportMessage>.Continuation
-    ) -> Task<Void, Never> {
-        Task {
-            var watch = ChannelWatch()
-            var recovery: Task<Void, Never>?
-            for await status in channel.statusChange {
-                switch watch.observe(status) {
-                case .joined:
-                    recovery?.cancel()
-                    recovery = nil
-                    continuation.yield(.reconnected)
-                case .lost:
-                    recovery?.cancel()
-                    recovery = Task {
-                        let rejoined = await rejoin.run(
-                            isRecovering: { [.subscribing, .subscribed].contains(channel.status) },
-                            subscribe: { try await channel.subscribeWithError() }
-                        )
-                        if !rejoined, !Task.isCancelled {
-                            diagnostics.record("game:\(gameId) left and could not rejoin")
-                            continuation.finish()
-                        }
-                    }
-                case nil:
-                    break
-                }
-            }
-            recovery?.cancel()
-        }
+        GuestChannel(realtime: client.realtimeV2, auth: auth, topic: "game:\(gameId)", rejoin: rejoin, diagnostics: diagnostics)
+            .messages(joined: .reconnected, decode: Self.decode)
     }
 
     /// A broadcast message (`{event, payload, type}`) as a transport message; nil for an
@@ -109,6 +44,92 @@ public struct RealtimeTransport: GameTransport {
         case "change": return (try? APIClient.decoder.decode(GameChange.self, from: data)).map(TransportMessage.change)
         case "pulse": return (try? APIClient.decoder.decode(Pulse.self, from: data)).map(TransportMessage.pulse)
         default: return nil
+        }
+    }
+}
+
+/// One private broadcast channel followed as the guest session: sign in, join, decode
+/// every broadcast with `decode`, yield `joined` on every transition into `subscribed`, and
+/// rejoin a lost channel with `rejoin` (the stream finishes when that fails). Shared by
+/// the game channels (`RealtimeTransport`) and the league scoreboards (`RealtimeScoreboardTransport`).
+struct GuestChannel {
+    let realtime: RealtimeClientV2
+    let auth: AuthSession
+    let topic: String
+    let rejoin: RejoinPolicy
+    let diagnostics: TransportDiagnostics
+
+    func messages<Message: Sendable>(
+        joined: Message, decode: @escaping @Sendable (JSONObject) -> Message?
+    ) -> AsyncStream<Message> {
+        let (stream, continuation) = AsyncStream.makeStream(of: Message.self)
+        let task = Task {
+            do {
+                try await auth.ensureSignedIn()
+            } catch {
+                diagnostics.record("sign-in: \(error)")
+                continuation.finish()
+                return
+            }
+            let channel = realtime.channel(topic) { $0.isPrivate = true }
+            let broadcasts = channel.broadcastStream(event: "*")
+            let watcher = watch(channel) {
+                continuation.yield(joined)
+            } onEnd: {
+                continuation.finish()
+            }
+            defer { watcher.cancel() }
+            do {
+                try await channel.subscribeWithError()
+            } catch {
+                diagnostics.record("join \(topic): \(error)")
+                await realtime.removeChannel(channel)
+                continuation.finish()
+                return
+            }
+            for await message in broadcasts {
+                if Task.isCancelled { break }
+                if let decoded = decode(message) { continuation.yield(decoded) }
+            }
+            await realtime.removeChannel(channel)
+            continuation.finish()
+        }
+        continuation.onTermination = { _ in task.cancel() }
+        return stream
+    }
+
+    /// Follows the channel's status: a join calls `onJoin`; a loss starts the rejoin, and a
+    /// rejoin that fails calls `onEnd`.
+    private func watch(
+        _ channel: RealtimeChannelV2, onJoin: @escaping @Sendable () -> Void, onEnd: @escaping @Sendable () -> Void
+    ) -> Task<Void, Never> {
+        let (topic, rejoin, diagnostics) = (topic, rejoin, diagnostics)
+        return Task {
+            var watch = ChannelWatch()
+            var recovery: Task<Void, Never>?
+            for await status in channel.statusChange {
+                switch watch.observe(status) {
+                case .joined:
+                    recovery?.cancel()
+                    recovery = nil
+                    onJoin()
+                case .lost:
+                    recovery?.cancel()
+                    recovery = Task {
+                        let rejoined = await rejoin.run(
+                            isRecovering: { [.subscribing, .subscribed].contains(channel.status) },
+                            subscribe: { try await channel.subscribeWithError() }
+                        )
+                        if !rejoined, !Task.isCancelled {
+                            diagnostics.record("\(topic) left and could not rejoin")
+                            onEnd()
+                        }
+                    }
+                case nil:
+                    break
+                }
+            }
+            recovery?.cancel()
         }
     }
 }

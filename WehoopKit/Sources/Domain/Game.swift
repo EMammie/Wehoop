@@ -44,12 +44,15 @@ public struct Game: Sendable, Hashable, Identifiable {
     public let lastSeq: Int
     /// Set when the demo environment replays a recording; nil for a real game.
     public let replay: ReplayKind?
+    /// When the provider last observed this game's state (`games.observed_at`); with
+    /// `lastSeq` it decides whether a scoreboard update is newer than this row.
+    public let observedAt: Date?
 
     public init(
         id: ID, league: League.Code, scheduledAt: Date, status: GameStatus, coverage: Coverage,
         home: Side, away: Side, score: Score, period: GamePeriod?, elamTargetScore: Int?,
         clock: GameClock, title: String?, tournamentName: String?, seasonYear: Int?, lastSeq: Int,
-        replay: ReplayKind?
+        replay: ReplayKind?, observedAt: Date? = nil
     ) {
         self.id = id
         self.league = league
@@ -67,6 +70,7 @@ public struct Game: Sendable, Hashable, Identifiable {
         self.seasonYear = seasonYear
         self.lastSeq = lastSeq
         self.replay = replay
+        self.observedAt = observedAt
     }
 }
 

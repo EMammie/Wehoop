@@ -37,8 +37,11 @@ public struct LeagueRepositoryImpl: LeagueRepository {
     }
 }
 
-/// `v_schedule`, cached briefly (30 s, the live-score poll interval until M4's scores
-/// channel) and kept on disk so a relaunch offline still shows the last schedule.
+/// `v_schedule`, cached briefly (30 s: switching days or leagues back and forth reads it
+/// once) and kept on disk so a relaunch offline still shows the last schedule. Live scores
+/// arrive on `league:{code}:scores`; `latestGames` is the re-read when that channel
+/// (re)joins or the app returns to the foreground, past the cache (the cached copy is
+/// still the answer when the network fails).
 public struct ScheduleRepositoryImpl: ScheduleRepository {
     let rows: any RowSource
     let cache: Cache
@@ -51,6 +54,14 @@ public struct ScheduleRepositoryImpl: ScheduleRepository {
     }
 
     public func games(league: League.Code, from: Date, to: Date) async throws -> [Game] {
+        try await read(league: league, from: from, to: to, maxAge: maxAge)
+    }
+
+    public func latestGames(league: League.Code, from: Date, to: Date) async throws -> [Game] {
+        try await read(league: league, from: from, to: to, maxAge: 0)
+    }
+
+    private func read(league: League.Code, from: Date, to: Date, maxAge: TimeInterval) async throws -> [Game] {
         let rows = rows
         let key = "schedule:\(league.rawValue):\(ISODate.format(from)):\(ISODate.format(to))"
         let fetched = try await cache.value([ScheduleRow].self, key: key, maxAge: maxAge, stale: .onFailure) {

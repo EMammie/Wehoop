@@ -9,8 +9,18 @@ public protocol LeagueRepository: Sendable {
 public protocol ScheduleRepository: Sendable {
     /// Games of `league` scheduled in `[from, to)`, ordered by scheduled time.
     func games(league: League.Code, from: Date, to: Date) async throws -> [Game]
+    /// The same window read from the backend now, past any cache: the re-read after the
+    /// scores channel (re)joins or the app returns to the foreground.
+    func latestGames(league: League.Code, from: Date, to: Date) async throws -> [Game]
     /// One game's schedule row (teams, tip-off, coverage); nil when no such game exists.
     func game(id: Game.ID) async throws -> Game?
+}
+
+extension ScheduleRepository {
+    /// For a repository without a cache, the latest read is the plain read.
+    public func latestGames(league: League.Code, from: Date, to: Date) async throws -> [Game] {
+        try await games(league: league, from: from, to: to)
+    }
 }
 
 /// Canonical players.

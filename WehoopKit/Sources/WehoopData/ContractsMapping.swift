@@ -92,7 +92,23 @@ enum Mapping {
             tournamentName: row.tournamentName,
             seasonYear: row.seasonYear,
             lastSeq: row.lastSeq,
-            replay: replay(row.replay)
+            replay: replay(row.replay),
+            observedAt: row.observedAt.flatMap(ISODate.parse)
+        )
+    }
+
+    /// One game of a `league:{code}:scores` message. The message's clock is a provider
+    /// string without a running flag, so the update carries it frozen.
+    static func scoreUpdate(_ delta: ScoreboardDelta) -> ScoreUpdate {
+        ScoreUpdate(
+            gameId: Game.ID(delta.gameId),
+            score: Domain.Score(home: delta.score.home, away: delta.score.away),
+            status: status(delta.status),
+            period: delta.period.map { GamePeriod(number: $0.number, kind: periodKind($0.type), sequence: $0.sequence) },
+            clockRemaining: delta.clock.flatMap(ClockModel.seconds),
+            latestSeq: delta.latestSeq,
+            observedAt: delta.observedAt.flatMap(ISODate.parse),
+            replay: replay(delta.replay)
         )
     }
 
