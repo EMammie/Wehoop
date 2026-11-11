@@ -104,17 +104,25 @@ public actor FakeGameServer {
     ///   - prefetch: deliveries queued on the subscription before the first snapshot is
     ///     served (they are buffered by the transport while the snapshot loads).
     ///   - retainedFrom: `/changes` reports history before this seq as expired.
+    ///   - replay: the demo label the snapshots and pulse carry (as the demo environment
+    ///     serves a replayed game); nil keeps the goldens' own (none).
     public init(
         game: GoldenGame,
         faults: DeliveryFaults = .none,
         firstSnapshot: FirstSnapshot = .pregame,
         prefetch: Int = 0,
-        retainedFrom: Int = 1
+        retainedFrom: Int = 1,
+        replay: Contracts.ReplayKind? = nil
     ) throws {
-        final = try Golden.snapshot(game)
+        if let replay {
+            final = try Golden.labelled(Golden.snapshot(game), replay: replay, at: ["game"])
+            pulse = try Golden.labelled(Golden.pulse(game), replay: replay)
+        } else {
+            final = try Golden.snapshot(game)
+            pulse = try Golden.pulse(game)
+        }
         pregame = Golden.pregameSnapshot(of: final)
         changes = try Golden.changes(game)
-        pulse = try Golden.pulse(game)
         gameId = final.game.id
         self.firstSnapshot = firstSnapshot
         self.retainedFrom = retainedFrom
