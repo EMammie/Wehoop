@@ -241,8 +241,28 @@ public struct FakeClock: SyncClock {
 }
 
 extension Golden {
+    /// A golden value as a demo replay would carry it: the same JSON with the `replay` label
+    /// set at `path` (backend rev 4.15). The goldens are real games, so the label is added in
+    /// the test, never by editing a committed fixture.
+    public static func labelled<T: Codable>(_ value: T, replay: Contracts.ReplayKind?, at path: [String] = []) throws -> T {
+        var root = try JSONSerialization.jsonObject(with: JSONEncoder().encode(value))
+        root = setting(root, path: path, to: replay.map { $0.rawValue as Any } ?? NSNull())
+        return try JSONDecoder().decode(T.self, from: JSONSerialization.data(withJSONObject: root))
+    }
+
+    private static func setting(_ node: Any, path: [String], to label: Any) -> Any {
+        guard var object = node as? [String: Any] else { return node }
+        if let key = path.first {
+            object[key] = setting(object[key] ?? [String: Any](), path: Array(path.dropFirst()), to: label)
+        } else {
+            object["replay"] = label
+        }
+        return object
+    }
+
     /// The game before any durable change, built from the final snapshot's identity:
-    /// seq 0, scheduled, 0–0, no period, clock or target, no line score, stats or plays.
+    /// seq 0, scheduled, 0–0, no period, clock or target, no line score, stats or plays
+    /// (the replay label is identity and is kept).
     /// Folding the whole golden stream onto it must reproduce the final snapshot.
     public static func pregameSnapshot(of final: Snapshot) -> Snapshot {
         let g = final.game
@@ -251,7 +271,8 @@ extension Golden {
                 id: g.id, league: g.league, providerGameId: g.providerGameId, status: .scheduled,
                 scheduledAt: g.scheduledAt, coverage: g.coverage, homeTeamId: g.homeTeamId,
                 awayTeamId: g.awayTeamId, score: Score(home: 0, away: 0), period: nil, clock: nil,
-                clockDecimal: nil, clockRunning: nil, clockAsOf: nil, observedAt: nil, elamTargetScore: nil
+                clockDecimal: nil, clockRunning: nil, clockAsOf: nil, observedAt: nil, elamTargetScore: nil,
+                replay: g.replay
             ),
             periods: [], teamStats: [], playerStats: [], events: [],
             seq: 0, retainedFrom: 1, coverage: final.coverage, serverTime: final.serverTime
