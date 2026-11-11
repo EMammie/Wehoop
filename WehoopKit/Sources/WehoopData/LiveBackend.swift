@@ -30,7 +30,8 @@ public final class LiveBackend: Sendable {
         liveGames = GameSyncRegistry(transport: services.transport, api: api)
         leagues = LeagueRepositoryImpl(rows: services.reader, cache: cache)
         schedule = ScheduleRepositoryImpl(rows: services.reader, cache: cache)
-        liveScores = ScoreboardFeed(transport: services.scoreboardTransport)
+        // One channel per league however many windows show it.
+        liveScores = ScoreboardFeed(transport: SharedScoreboardTransport(upstream: services.scoreboardTransport))
         players = PlayerRepositoryImpl(api: api)
         favorites = FavoritesStore(store: store)
     }

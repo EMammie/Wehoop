@@ -2,6 +2,7 @@ import Contracts
 import Domain
 import Foundation
 import Supabase
+import Synchronization
 
 /// What a league's scoreboard channel delivers, at the wire level.
 public enum ScoreboardMessage: Sendable, Hashable {
@@ -51,6 +52,81 @@ public struct RealtimeScoreboardTransport: ScoreboardTransport {
     static func decode(event: String, payload data: Data) -> ScoreboardMessage? {
         guard event == "scores", let board = try? APIClient.decoder.decode(Scoreboard.self, from: data) else { return nil }
         return .scores(board)
+    }
+}
+
+/// One upstream subscription per league however many follow it (two iPad windows on the
+/// same league's Scores), as `GameSyncRegistry` does for games. Without it the second
+/// follower of a topic would wait on `TopicGate` until the first left.
+///
+/// The first follower of a league starts the upstream subscription; every follower gets
+/// each message; a follower that arrives after the channel joined gets `.reconnected` at
+/// once, so it re-reads like any joiner. When the last follower leaves, the upstream
+/// subscription is cancelled (the channel is removed). When the upstream ends (the channel
+/// was lost for good), every follower's stream finishes; the next follower starts afresh.
+public final class SharedScoreboardTransport: ScoreboardTransport {
+    private struct Entry {
+        let id = UUID()
+        var followers: [UUID: AsyncStream<ScoreboardMessage>.Continuation] = [:]
+        var joined = false
+        var pump: Task<Void, Never>?
+    }
+
+    private let upstream: any ScoreboardTransport
+    private let entries = Mutex<[String: Entry]>([:])
+
+    public init(upstream: any ScoreboardTransport) {
+        self.upstream = upstream
+    }
+
+    /// Leagues with an upstream subscription now (tests).
+    var activeLeagues: [String] { entries.withLock { $0.keys.sorted() } }
+
+    public func messages(league: String) -> AsyncStream<ScoreboardMessage> {
+        let (stream, continuation) = AsyncStream.makeStream(of: ScoreboardMessage.self)
+        let token = UUID()
+        continuation.onTermination = { [weak self] _ in self?.unfollow(league, token) }
+        entries.withLock { entries in
+            var entry = entries[league] ?? Entry()
+            entry.followers[token] = continuation
+            if entry.joined { continuation.yield(.reconnected) }
+            if entry.pump == nil { entry.pump = pump(league, entryId: entry.id) }
+            entries[league] = entry
+        }
+        return stream
+    }
+
+    private func pump(_ league: String, entryId: UUID) -> Task<Void, Never> {
+        let messages = upstream.messages(league: league)
+        return Task { [weak self] in
+            for await message in messages {
+                self?.entries.withLock { entries in
+                    guard var entry = entries[league], entry.id == entryId else { return }
+                    if message == .reconnected { entry.joined = true }
+                    entry.followers.values.forEach { $0.yield(message) }
+                    entries[league] = entry
+                }
+            }
+            let ended = self?.entries.withLock { entries -> [AsyncStream<ScoreboardMessage>.Continuation] in
+                guard let entry = entries[league], entry.id == entryId else { return [] }
+                entries[league] = nil
+                return Array(entry.followers.values)
+            }
+            ended?.forEach { $0.finish() }
+        }
+    }
+
+    private func unfollow(_ league: String, _ token: UUID) {
+        let stop = entries.withLock { entries -> Task<Void, Never>? in
+            guard var entry = entries[league], entry.followers.removeValue(forKey: token) != nil else { return nil }
+            if entry.followers.isEmpty {
+                entries[league] = nil
+                return entry.pump
+            }
+            entries[league] = entry
+            return nil
+        }
+        stop?.cancel()
     }
 }
 

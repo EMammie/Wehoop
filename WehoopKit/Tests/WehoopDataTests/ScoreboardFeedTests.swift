@@ -7,17 +7,27 @@ import Testing
 import TestSupport
 @testable import WehoopData
 
-/// A scoreboard transport whose messages the test sends; each `messages` call is one subscription.
+/// A scoreboard transport whose messages the test sends; each `messages` call is one
+/// subscription, whose end (the consumer left) is recorded.
 final class ScriptedScoreboardTransport: ScoreboardTransport {
-    private let state = Mutex<(leagues: [String], continuations: [AsyncStream<ScoreboardMessage>.Continuation])>(([], []))
+    private struct State {
+        var leagues: [String] = []
+        var continuations: [AsyncStream<ScoreboardMessage>.Continuation] = []
+        var terminated: Set<Int> = []
+    }
+
+    private let state = Mutex(State())
 
     var subscribedLeagues: [String] { state.withLock { $0.leagues } }
+    var terminated: Set<Int> { state.withLock { $0.terminated } }
 
     func messages(league: String) -> AsyncStream<ScoreboardMessage> {
         let (stream, continuation) = AsyncStream.makeStream(of: ScoreboardMessage.self)
         state.withLock {
+            let index = $0.leagues.count
             $0.leagues.append(league)
             $0.continuations.append(continuation)
+            continuation.onTermination = { [weak self] _ in _ = self?.state.withLock { $0.terminated.insert(index) } }
         }
         return stream
     }

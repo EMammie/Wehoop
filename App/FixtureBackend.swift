@@ -45,7 +45,9 @@ final class FixtureBackend: Sendable {
         leagues = LeagueRepositoryImpl(rows: rows, cache: cache)
         // The rows are in memory and move with time: never cached.
         schedule = ScheduleRepositoryImpl(rows: rows, cache: cache, maxAge: 0)
-        liveScores = ScoreboardFeed(transport: FixtureScoreboardTransport(script: script, tick: scoreTick))
+        liveScores = ScoreboardFeed(
+            transport: SharedScoreboardTransport(upstream: FixtureScoreboardTransport(script: script, tick: scoreTick))
+        )
     }
 
     /// Game id → golden game, for every golden game whose snapshot decodes.
