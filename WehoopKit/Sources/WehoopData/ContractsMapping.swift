@@ -37,6 +37,15 @@ enum Mapping {
 
     static func coverage(raw: String) -> Coverage { coverage(CoverageLevel(rawValue: raw)) }
 
+    static func replay(_ replay: Contracts.ReplayKind?) -> Domain.ReplayKind? {
+        switch replay {
+        case nil: nil
+        case .recorded: .recorded
+        case .synthetic: .synthetic
+        case .unknown(let raw): .unknown(raw)
+        }
+    }
+
     static func periodKind(_ type: PeriodType) -> PeriodKind {
         switch type {
         case .quarter: .quarter
@@ -82,7 +91,8 @@ enum Mapping {
             title: row.title,
             tournamentName: row.tournamentName,
             seasonYear: row.seasonYear,
-            lastSeq: row.lastSeq
+            lastSeq: row.lastSeq,
+            replay: replay(row.replay)
         )
     }
 
@@ -116,6 +126,7 @@ enum Mapping {
             elamTargetScore: g.elamTargetScore,
             clock: GameClock(remaining: model.base, running: model.running, asOf: model.asOf?.addingTimeInterval(-serverOffset)),
             seq: state.lastSeq,
+            replay: replay(g.identity.replay),
             detail: detail(g)
         )
     }

@@ -21,6 +21,18 @@ struct MappingTests {
         }
     }
 
+    @Test("The replay label maps from the schedule row and the snapshot; a real game has none")
+    func replayLabel() throws {
+        let row = try #require(try Golden.schedule(.wnba).first)
+        #expect(Mapping.game(row)?.replay == nil)
+        #expect(Mapping.game(try Golden.labelled(row, replay: .recorded))?.replay == .recorded)
+        #expect(Mapping.game(try Golden.labelled(row, replay: .unknown("rerun")))?.replay == .unknown("rerun"))
+        let snapshot = try Golden.snapshot(.wnba)
+        #expect(Mapping.liveGame(LiveGameState(snapshot: snapshot), serverOffset: 0).replay == nil)
+        let synthetic = try Golden.labelled(snapshot, replay: .synthetic, at: ["game"])
+        #expect(Mapping.liveGame(LiveGameState(snapshot: synthetic), serverOffset: 0).replay == .synthetic)
+    }
+
     @Test("Leagues map with their short name and colors")
     func leagues() throws {
         let leagues = try Golden.leagues().map(Mapping.league)

@@ -42,11 +42,14 @@ public struct Game: Sendable, Hashable, Identifiable {
     public let seasonYear: Int?
     /// The highest change seq the backend had for this game when the row was read.
     public let lastSeq: Int
+    /// Set when the demo environment replays a recording; nil for a real game.
+    public let replay: ReplayKind?
 
     public init(
         id: ID, league: League.Code, scheduledAt: Date, status: GameStatus, coverage: Coverage,
         home: Side, away: Side, score: Score, period: GamePeriod?, elamTargetScore: Int?,
-        clock: GameClock, title: String?, tournamentName: String?, seasonYear: Int?, lastSeq: Int
+        clock: GameClock, title: String?, tournamentName: String?, seasonYear: Int?, lastSeq: Int,
+        replay: ReplayKind?
     ) {
         self.id = id
         self.league = league
@@ -63,6 +66,7 @@ public struct Game: Sendable, Hashable, Identifiable {
         self.tournamentName = tournamentName
         self.seasonYear = seasonYear
         self.lastSeq = lastSeq
+        self.replay = replay
     }
 }
 

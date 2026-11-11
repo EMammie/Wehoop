@@ -15,11 +15,14 @@ public struct LiveGame: Sendable, Hashable, Identifiable {
     public let clock: GameClock
     /// The last change seq folded into this value.
     public let seq: Int
+    /// Set when the demo environment replays a recording; nil for a real game. It comes
+    /// from the snapshot, so it survives reconnects and re-snapshots.
+    public let replay: ReplayKind?
     public let detail: GameDetail
 
     public init(
         id: Game.ID, league: League.Code, status: GameStatus, coverage: Coverage, score: Score,
-        period: GamePeriod?, elamTargetScore: Int?, clock: GameClock, seq: Int,
+        period: GamePeriod?, elamTargetScore: Int?, clock: GameClock, seq: Int, replay: ReplayKind?,
         detail: GameDetail = .empty
     ) {
         self.id = id
@@ -31,6 +34,7 @@ public struct LiveGame: Sendable, Hashable, Identifiable {
         self.elamTargetScore = elamTargetScore
         self.clock = clock
         self.seq = seq
+        self.replay = replay
         self.detail = detail
     }
 }

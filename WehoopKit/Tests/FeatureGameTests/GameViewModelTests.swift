@@ -47,12 +47,14 @@ enum Sample {
 
     static func live(
         status: GameStatus = .inProgress, coverage: Coverage = .full, plays: [Play] = [],
-        score: Score = Score(home: 2, away: 0), period: GamePeriod? = GamePeriod(number: 1, kind: .quarter, sequence: 1)
+        score: Score = Score(home: 2, away: 0), period: GamePeriod? = GamePeriod(number: 1, kind: .quarter, sequence: 1),
+        replay: ReplayKind? = nil
     ) -> LiveGame {
         LiveGame(
             id: id, league: League.Code("wnba"), status: status, coverage: coverage, score: score,
             period: period, elamTargetScore: nil,
             clock: GameClock(remaining: 300, running: true, asOf: Date(timeIntervalSince1970: 1_000)), seq: plays.count,
+            replay: replay,
             detail: GameDetail(periods: [], plays: plays, teamLines: [], playerLines: [])
         )
     }
@@ -64,7 +66,7 @@ enum Sample {
         away: Game.Side(teamId: nil, name: "Aces", market: "Las Vegas", alias: "LV"),
         score: Score(home: 0, away: 0), period: nil, elamTargetScore: nil,
         clock: GameClock(remaining: nil, running: nil, asOf: nil), title: nil,
-        tournamentName: nil, seasonYear: 2026, lastSeq: 0
+        tournamentName: nil, seasonYear: 2026, lastSeq: 0, replay: nil
     )
 }
 
@@ -155,6 +157,22 @@ struct GameContentTests {
         #expect(content.hasPlays == false)
         #expect(content.coverageNote?.contains("Score-only") == true)
         #expect(GameContent(schedule: nil, live: Sample.live()).coverageNote == nil)
+    }
+
+    @Test("A replay is labelled with a badge and a note; a real game has neither")
+    func replayLabel() {
+        let real = GameContent(schedule: Sample.schedule, live: Sample.live())
+        #expect(real.replayBadge == nil && real.replayNote == nil)
+        let recorded = GameContent(schedule: Sample.schedule, live: Sample.live(replay: .recorded))
+        #expect(recorded.replayBadge == "Replay")
+        #expect(recorded.replayNote?.contains("not happening now") == true)
+        let synthetic = GameContent(schedule: nil, live: Sample.live(replay: .synthetic))
+        #expect(synthetic.replayBadge == "Simulated replay")
+        #expect(synthetic.replayNote?.contains("never played") == true)
+        let unknown = GameContent(schedule: nil, live: Sample.live(replay: .unknown("rerun")))
+        #expect(unknown.replayBadge == "Replay")
+        // The status line is unchanged: the badge says replay, the clock and period stay as served.
+        #expect(recorded.statusText == real.statusText && recorded.isLive)
     }
 
     @Test("Status: period while live, halftime, unofficial before validation, Final/OT after overtime")

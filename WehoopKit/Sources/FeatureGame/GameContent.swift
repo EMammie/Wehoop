@@ -73,6 +73,36 @@ public struct GameContent: Equatable, Sendable {
         }
     }
 
+    /// The demo label (backend plan rev 4.15). Both sources carry it from the backend; the
+    /// live value comes from the snapshot, so it holds across reconnects.
+    public var replay: ReplayKind? { live.replay ?? schedule?.replay }
+
+    /// The badge for a replayed game: never shown for a real one.
+    public var replayBadge: String? {
+        switch replay {
+        case nil: nil
+        case .recorded, .unknown: String(localized: "Replay")
+        case .synthetic: String(localized: "Simulated replay")
+        }
+    }
+
+    /// What the replay is, so nobody takes it for a game happening now.
+    public var replayNote: String? {
+        switch replay {
+        case nil:
+            nil
+        case .recorded:
+            String(localized: "A recorded game replayed at real-time speed for testing. It is not happening now.")
+        case .synthetic:
+            String(localized: """
+                A simulated game assembled from sample data for testing. It was never played, \
+                and its plays and score are not real.
+                """)
+        case .unknown:
+            String(localized: "A replay for testing. It is not happening now.")
+        }
+    }
+
     /// "Final" once the provider has validated the result; "Final · unofficial" while the
     /// statistics are still being validated (`complete`).
     public var statusText: String {

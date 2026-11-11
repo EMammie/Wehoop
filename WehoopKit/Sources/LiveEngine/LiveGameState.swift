@@ -14,6 +14,8 @@ public struct GameState: Sendable, Hashable {
         public let coverage: String
         public let homeTeamId: String?
         public let awayTeamId: String?
+        /// The demo replay label (backend rev 4.15); nil for a real game.
+        public let replay: ReplayKind?
     }
 
     /// One current play: the provider's ordering key (backend migration 0013) and its body.
@@ -111,7 +113,8 @@ public struct LiveGameState: Sendable, Hashable {
         game = GameState(
             identity: .init(
                 id: g.id, league: g.league, providerGameId: g.providerGameId, scheduledAt: g.scheduledAt,
-                coverage: snapshot.coverage, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId
+                coverage: snapshot.coverage, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId,
+                replay: g.replay
             ),
             status: g.status,
             score: g.score,

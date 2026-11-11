@@ -71,6 +71,19 @@ struct LiveGameStateTests {
         #expect(state.apply(changes[2]) == .applied && state.lastSeq == 3)
     }
 
+    @Test("The replay label is identity: a snapshot sets it and folding every change keeps it")
+    func replayLabel() throws {
+        let final = try Golden.snapshot(.wnba)
+        #expect(LiveGameState(snapshot: final).game.identity.replay == nil)
+        let labelled = try Golden.labelled(final, replay: .recorded, at: ["game"])
+        var state = LiveGameState(snapshot: Golden.pregameSnapshot(of: labelled))
+        #expect(state.game.identity.replay == .recorded)
+        for change in try Golden.changes(.wnba) { _ = state.apply(change) }
+        #expect(state.game.identity.replay == .recorded)
+        let synthetic = try Golden.labelled(final, replay: .synthetic, at: ["game"])
+        #expect(LiveGameState(snapshot: synthetic).game.identity.replay == .synthetic)
+    }
+
     @Test("A change of another game is ignored")
     func foreignGame() throws {
         let final = try Golden.snapshot(.wnba)

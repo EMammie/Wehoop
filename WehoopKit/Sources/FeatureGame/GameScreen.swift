@@ -47,8 +47,11 @@ public struct GameScreen: View {
                 if !content.live.detail.periods.isEmpty {
                     LineScoreView(content: content)
                 }
+                if let note = content.replayNote {
+                    NoteView(text: note, systemImage: "play.rectangle")
+                }
                 if let note = content.coverageNote {
-                    CoverageNoteView(text: note)
+                    NoteView(text: note, systemImage: "info.circle")
                 }
                 if content.hasPlays {
                     Picker(String(localized: "Section"), selection: $tab) {
@@ -77,6 +80,9 @@ struct GameHeaderView: View {
 
     var body: some View {
         VStack(spacing: Spacing.s) {
+            if let badge = content.replayBadge {
+                ReplayBadge(text: badge)
+            }
             HStack(alignment: .center) {
                 team(.away)
                 Spacer()
@@ -148,11 +154,28 @@ struct ClockView: View {
     }
 }
 
-struct CoverageNoteView: View {
+/// Marks a demo replay in the header, so it is never read as a game happening now.
+struct ReplayBadge: View {
     let text: String
 
     var body: some View {
-        Label(text, systemImage: "info.circle")
+        Label(text, systemImage: "play.rectangle.fill")
+            .wehoopFont(.eyebrow)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.wehoopOnAccent)
+            .padding(.horizontal, Spacing.s)
+            .padding(.vertical, Spacing.xs)
+            .background(Color.wehoopHighlight, in: Capsule())
+    }
+}
+
+/// A line of context under the header: the replay label, the coverage level.
+struct NoteView: View {
+    let text: String
+    let systemImage: String
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
             .wehoopFont(.footnote)
             .foregroundStyle(Color.wehoopTextSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
