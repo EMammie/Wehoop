@@ -1,4 +1,5 @@
 import Domain
+import FeatureScores
 import Foundation
 import Observation
 
@@ -45,6 +46,16 @@ final class AppNavigation {
 
     func push(_ route: AppRoute) {
         paths[selectedTab, default: []].append(route)
+    }
+
+    /// Pushes onto `tab`'s path, whichever tab is selected (a feature's action belongs to its tab).
+    func push(_ route: AppRoute, on tab: AppTab) {
+        paths[tab, default: []].append(route)
+    }
+
+    /// The Scores tab's hops: a tapped game opens the game screen on the Scores tab.
+    var scoresActions: ScoresActions {
+        ScoresActions(didSelectGame: { [weak self] id in self?.push(.game(id), on: .scores) })
     }
 
     /// Shows a link: its tab, with its path replacing whatever that tab showed.

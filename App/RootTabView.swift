@@ -62,7 +62,12 @@ struct RootTabView: View {
     @ViewBuilder
     private func rootView(for tab: AppTab) -> some View {
         switch tab {
-        case .scores: ScoresRootView()
+        case .scores:
+            if let dependencies = root.scoresDependencies {
+                ScoresScreen(dependencies: dependencies, actions: navigation.scoresActions)
+            } else {
+                NotConfiguredView(reason: root.unconfiguredReason)
+            }
         case .leaders: LeadersRootView()
         case .players: PlayersRootView()
         case .teams: TeamsRootView()

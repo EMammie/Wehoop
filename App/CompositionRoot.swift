@@ -1,5 +1,6 @@
 import Domain
 import FeatureGame
+import FeatureScores
 import Foundation
 import OSLog
 import SwiftUI
@@ -72,6 +73,16 @@ final class CompositionRoot {
         switch backend {
         case .live(let live): GameDependencies(liveGames: live.liveGames, schedule: live.schedule)
         case .fixtures(let fixtures): GameDependencies(liveGames: fixtures.liveGames, schedule: fixtures.schedule)
+        case .unconfigured: nil
+        }
+    }
+
+    /// The Scores tab's dependencies; nil when the app is not configured.
+    var scoresDependencies: ScoresDependencies? {
+        switch backend {
+        case .live(let live): ScoresDependencies(leagues: live.leagues, schedule: live.schedule, liveScores: live.liveScores)
+        case .fixtures(let fixtures):
+            ScoresDependencies(leagues: fixtures.leagues, schedule: fixtures.schedule, liveScores: fixtures.liveScores)
         case .unconfigured: nil
         }
     }
