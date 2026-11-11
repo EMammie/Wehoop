@@ -154,21 +154,6 @@ struct ClockView: View {
     }
 }
 
-/// Marks a demo replay in the header, so it is never read as a game happening now.
-struct ReplayBadge: View {
-    let text: String
-
-    var body: some View {
-        Label(text, systemImage: "play.rectangle.fill")
-            .wehoopFont(.eyebrow)
-            .textCase(.uppercase)
-            .foregroundStyle(Color.wehoopOnAccent)
-            .padding(.horizontal, Spacing.s)
-            .padding(.vertical, Spacing.xs)
-            .background(Color.wehoopHighlight, in: Capsule())
-    }
-}
-
 /// A line of context under the header: the replay label, the coverage level.
 struct NoteView: View {
     let text: String

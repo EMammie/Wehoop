@@ -1,19 +1,12 @@
+import DesignSystem
 import Domain
 import Foundation
 
 /// Text for clocks, periods and box score cells.
 enum GameFormat {
-    /// `M:SS` from a minute up (rounded up, so the observed value shows until a full second
-    /// has passed), `S.T` below a minute (tenths rounded up). Matches LiveEngine's `ClockModel`.
+    /// The shared clock text (DesignSystem), so the list and the game screen agree.
     static func clock(_ seconds: Double) -> String {
-        if seconds >= 60 {
-            let whole = Int(seconds.rounded(.up))
-            return "\(whole / 60):" + String(format: "%02d", whole % 60)
-        }
-        let tenths = max(0, Int((seconds * 10 - 1e-9).rounded(.up)))
-        // Just under a minute rounds up to 600 tenths: that is the minute display.
-        if tenths >= 600 { return "1:00" }
-        return "\(tenths / 10).\(tenths % 10)"
+        ClockText.format(seconds)
     }
 
     static func periodLabel(_ period: GamePeriod) -> String {
