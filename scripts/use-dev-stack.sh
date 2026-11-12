@@ -12,4 +12,7 @@ OUT=Config/Supabase.local.xcconfig
 git check-ignore -q "$OUT" || { echo "STOP: $OUT is not git-ignored"; exit 64; }
 umask 077
 printf '// Written by scripts/use-dev-stack.sh: the local dev stack. Git-ignored.\nWEHOOP_SUPABASE_URL = http:/$()/127.0.0.1:54321\nWEHOOP_SUPABASE_ANON_KEY = %s\n' "$KEY" > "$OUT"
+# Undo scripts/use-demo.sh's API override (only that one; a hand-written override is kept).
+API=Config/WehoopAPI.local.xcconfig
+if [[ -f $API ]] && head -1 "$API" | grep -q 'scripts/use-demo.sh'; then rm "$API"; echo "removed $API (demo API override)"; fi
 echo "wrote $OUT (dev stack, key not shown); rebuild the app to pick it up"
